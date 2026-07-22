@@ -1,0 +1,149 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Design tokens. Light is the source of truth; dark mirrors it.
+   See .claude/skills/design-system for the rules these encode.
+   ------------------------------------------------------------------------ */
+:root {
+  --background: #ffffff;
+  --surface: #ffffff;
+  --subtle: #f7f8fa;
+  --border: #e4e7ec;
+  --foreground: #101828;
+  --muted: #5b6472;
+  --accent: #6538c9;
+  --accent-hover: #542eaa;
+  --accent-subtle: #f4f0ff;
+  --success: #067647;
+  --danger: #b42318;
+  --danger-subtle: #fef3f2;
+
+  --grid-line: rgba(16, 24, 40, 0.05);
+  --grid-size: 40px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0b0d10;
+    --surface: #12151a;
+    --subtle: #171b21;
+    --border: #252a32;
+    --foreground: #f2f4f7;
+    --muted: #98a2b3;
+    --accent: #b39bf5;
+    --accent-hover: #c6b4f8;
+    --accent-subtle: #241a3d;
+    --success: #3ccb7f;
+    --danger: #f97066;
+    --danger-subtle: #2a1512;
+
+    --grid-line: rgba(255, 255, 255, 0.05);
+  }
+}
+
+/* Explicit user choice wins over the system preference. `data-theme` is stamped
+   on <html> by the no-flash script in the root layout. */
+:root[data-theme="light"] {
+  --background: #ffffff;
+  --surface: #ffffff;
+  --subtle: #f7f8fa;
+  --border: #e4e7ec;
+  --foreground: #101828;
+  --muted: #5b6472;
+  --accent: #6538c9;
+  --accent-hover: #542eaa;
+  --accent-subtle: #f4f0ff;
+  --success: #067647;
+  --danger: #b42318;
+  --danger-subtle: #fef3f2;
+
+  --grid-line: rgba(16, 24, 40, 0.05);
+}
+
+:root[data-theme="dark"] {
+  --background: #0b0d10;
+  --surface: #12151a;
+  --subtle: #171b21;
+  --border: #252a32;
+  --foreground: #f2f4f7;
+  --muted: #98a2b3;
+  --accent: #b39bf5;
+  --accent-hover: #c6b4f8;
+  --accent-subtle: #241a3d;
+  --success: #3ccb7f;
+  --danger: #f97066;
+  --danger-subtle: #2a1512;
+
+  --grid-line: rgba(255, 255, 255, 0.05);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-subtle: var(--subtle);
+  --color-border: var(--border);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-subtle: var(--accent-subtle);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-danger-subtle: var(--danger-subtle);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* The canvas grid — Dock's one signature element. Kept deliberately quiet. */
+.grid-surface {
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: var(--grid-size) var(--grid-size);
+  background-position: center center;
+}
+
+/* Always pair .grid-surface with this on marketing pages so the grid dissolves
+   at the edges rather than ending in a hard line. */
+.grid-fade {
+  mask-image: radial-gradient(
+    ellipse 75% 60% at 50% 35%,
+    #000 40%,
+    transparent 100%
+  );
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Skeletons for the Next.js `loading.tsx` boundaries. */
+.skeleton {
+  background: var(--subtle);
+  border-radius: 0.5rem;
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
+::selection {
+  background: var(--accent-subtle);
+  color: var(--foreground);
+}

@@ -1,0 +1,75 @@
+---
+name: product-model
+description: What Dock is, the domain vocabulary (space, syllabus, lesson, topic card, learn mode), and what is deliberately out of scope. Load before adding a feature, writing user-facing copy, or naming a model, route or table.
+---
+
+# Product model
+
+Dock is a **revision workspace**. A student creates a space **for one lesson**,
+shares that lesson and the syllabus section it covers, and the space lays the
+lesson's topics out as cards on a grid canvas they can open to learn from.
+
+Spaces are **lesson-scoped, not subject-scoped**. One lesson, one space, one
+canvas. A subject is simply the set of spaces a student has made for it — it is
+not a container in the product.
+
+## Vocabulary — use these exact words
+
+| Term | Meaning |
+| --- | --- |
+| **Space** | Container for **one lesson**. Owns that lesson, its syllabus section, its topics and the canvas layout. |
+| **Lesson** | The teaching content a space is built around. One lesson per space, shared when the space is created. |
+| **Syllabus** | The scope the lesson sits inside: the syllabus section and the depth expected. Shared alongside the lesson. |
+| **Topic** | A single thing to learn *within that lesson*, derived from the lesson and its syllabus section. |
+| **Topic card** | A topic as it appears on the canvas: title, syllabus reference, revision progress, video count. |
+| **Canvas** | The grid-backed surface a space opens as. Cards are positioned on it and the layout persists. |
+| **Learn mode** | What opens on clicking a card: chat scoped to that one topic. |
+| **Video shelf** | The YouTube explainers matched to a single topic, inside the card. |
+
+Say "share a lesson", not "upload". Say "space", never "workspace", "board" or
+"project". Say "topic card", never "node" or "tile". Never describe a space as
+covering a subject, a course or an exam — it covers one lesson.
+
+## How the pieces relate
+
+```
+User ──< Space (one lesson + its syllabus section)
+             └──< Topic ──< ChatMessage
+                       └──< Video
+```
+
+The lesson and its syllabus section define the topics. Chat and videos hang off a
+single topic — never off a space as a whole. That scoping is the whole point of the
+product: a card's conversation knows one topic of one lesson, at the depth the
+syllabus asks for.
+
+## Deliberately out of scope
+
+Do not add these, and do not write copy implying them:
+
+- **File uploads of any kind** — no PDF, no slide decks, no attachments. Syllabus
+  and lessons come in as text the user shares.
+- **Assignments, homework, past papers or grading.** Dock is for revising, not for
+  submitting work.
+- Collaboration, sharing spaces, classrooms, or anything multi-user.
+- Payments, plans and pricing pages. Early access is free.
+
+If a request seems to need one of these, raise it before building it.
+
+## Build order
+
+1. **Foundation (current)** — marketing site (landing, features, about), auth
+   (register, login, session), Next.js + FastAPI base.
+2. **Spaces and canvas** — create a space for a lesson, share it with its syllabus
+   section, get topic cards on the grid, persist their layout.
+3. **Learn mode and videos** — per-topic chat grounded in the shared lesson, and
+   the per-topic video shelf.
+
+Anything on the marketing pages describing stage 2 or 3 is a promise, not a claim
+about what ships today. `/about` states the roadmap honestly — keep it that way.
+
+## Copy voice
+
+Plain, concrete, second person. Short sentences. No exclamation marks, no "AI-powered",
+no "revolutionise", no growth-hack urgency. Describe what the product does for one
+student the night before an exam.

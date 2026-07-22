@@ -1,0 +1,154 @@
+---
+name: backend-fastapi
+description: Conventions for the Dock FastAPI backend — Poetry src layout, router/service/DAO layering, async MongoDB, Pydantic schemas, the exception hierarchy, hashing and the access/refresh token flow. Load before editing anything under backend/.
+---
+
+# Backend — FastAPI + Poetry + MongoDB
+
+Stack: **FastAPI**, Python 3.12+, Poetry (src layout), **MongoDB** via the native
+async `pymongo` client, Pydantic v2 / pydantic-settings, PyJWT, bcrypt.
+Located in `backend/`.
+
+MongoDB, not SQL: the data is document-shaped (a space owns its lesson, topics and
+canvas layout) and there is no relational model to preserve. There is no ORM, no
+SQLAlchemy and no Alembic. Beanie is **not** usable here — it does not support
+Python 3.14, which this environment runs.
+
+## Layout
+
+```
+backend/
+  pyproject.toml          # Poetry; packages = [{include = "app", from = "src"}]
+  src/app/
+    main.py               # FastAPI instance, CORS, lifespan, error handlers, router
+    dependencies.py       # DbDep, AuthServiceDep, CurrentUser
+    router/               # HTTP layer — __init__.py aggregates api_router
+      auth.py  health.py
+    services/             # business logic, class-based (AuthService)
+    dao/                  # data access, class-based (BaseDAO, UserDAO, ...)
+    models/               # Pydantic document models (+ from_document/to_document)
+    schemas/              # request/response models
+    core/                 # config, security, hashing, cookies, exceptions, error_handlers
+    db/mongo.py           # client, get_db, connect/disconnect, indexes
+  tests/
+```
+
+## Layering rule
+
+`router → service → dao → mongo`.
+
+- **Routers** parse input and return schemas. No queries, no business rules.
+- **Services** are classes holding the rules (`AuthService(db)`). They raise domain
+  errors from `core.exceptions` — never `HTTPException`.
+- **DAOs** are classes extending `BaseDAO`, one per collection. They are the *only*
+  place a Mongo query is written, and they speak documents and models — not HTTP.
+
+A router that builds a filter dict, or a DAO that raises an HTTP error, is wrong.
+
+## Errors
+
+`core/exceptions.py` defines `AppError` as the base, with `status_code`, `code` and
+`message`, plus the subclasses services actually raise (`NotFoundError`,
+`ConflictError`, `AuthenticationError`, `EmailAlreadyRegistered`, …). Add new domain
+errors there rather than reaching for `HTTPException`.
+
+`core/error_handlers.py` registers global handlers in `main.py` so **every** error
+leaves the API in one shape:
+
+```json
+{ "code": "email_already_registered", "detail": "An account with that email already exists." }
+```
+
+Handlers cover `AppError`, `RequestValidationError` (flattened to one message plus
+`field`), `StarletteHTTPException`, and a catch-all that logs the traceback and
+returns a generic 500. Never let a driver message or stack trace reach a client.
+
+## Async everything
+
+- Routes, dependencies, services and DAOs are `async def`.
+- The database comes from `DbDep`; never construct a client in a service. One
+  `AsyncMongoClient` per process, created in `db/mongo.py` — it pools internally.
+- Indexes are declared in `connect()`: unique on `users.email`, plus a TTL index on
+  `refresh_tokens.expires_at` so Mongo evicts dead sessions.
+- Correctness is enforced by indexes, not by read-then-write checks. Registration
+  inserts and catches `DuplicateKeyError`; checking first leaves a race.
+
+## Documents and schemas
+
+- Mongo stores the id as `_id`; the app calls it `id`. That seam exists **only** in
+  `Model.from_document()` / `to_document()` — nothing else touches `_id`.
+- Primary keys are UUID strings. Timestamps are timezone-aware UTC (`utcnow()`).
+- Request and response schemas are separate. A response model never exposes
+  `hashed_password`; return `Schema.model_validate(obj, from_attributes=True)`.
+- Validation lives on the schema (`field_validator`) so FastAPI returns 422 before
+  any service runs. Emails are normalised to lowercase on the way in.
+- Every route declares `response_model`, an explicit non-200 `status_code`, a
+  `summary`, and `tags` on its router.
+- New models must be re-exported from `app/models/__init__.py`.
+
+## Hashing (`core/hashing.py`)
+
+Two jobs, two algorithms — do not mix them up:
+
+- **Passwords** → `PasswordHasher` (bcrypt): slow and salted, because passwords are
+  low-entropy and guessable. Inputs are capped at 72 bytes; bcrypt silently
+  truncates beyond that.
+- **API keys and opaque tokens** → `TokenHasher` (HMAC-SHA256 keyed with
+  `secret_key`): fast and *deterministic*, so a record can be found by its hash.
+  bcrypt cannot do that. This is what stores refresh tokens, and what will store
+  user-supplied API keys.
+
+Both verifications are constant-time. Never bcrypt an API key; never SHA-256 a
+password.
+
+## Auth: access + refresh
+
+- **Access token** — 15 minutes, sent on every request, not stored server-side.
+- **Refresh token** — 30 days, used only to mint a new pair, stored *hashed* in
+  `refresh_tokens` so it can be rotated and revoked.
+- Both are JWTs carrying a `type` claim. `decode_token` verifies that claim, so a
+  refresh token cannot be used as an access token — without it, the short access
+  lifetime means nothing.
+- **Rotation**: every `/auth/refresh` revokes the presented token and issues a new
+  pair. Replaying an already-rotated token is treated as a leak: **every** session
+  for that user is revoked.
+- **Cookies** (`core/cookies.py`): the API sets `dock_access` and `dock_refresh` as
+  httpOnly cookies on register, login and refresh, and clears them on logout. The
+  frontend stores nothing. `COOKIE_SECURE` must be true in production — the config
+  refuses to boot otherwise.
+- `get_current_user` reads the access token from the cookie first, falling back to
+  a bearer header for scripts and tests. Auth is enforced by the `CurrentUser`
+  dependency, never by ad-hoc checks in a route body.
+- Login failures return one generic 401 for every cause — never reveal whether an
+  email exists. Registration's 409 is the one intentional exception.
+
+## Config
+
+- Everything goes through `app.core.config.Settings` (pydantic-settings, `.env`).
+  Never read `os.environ` in application code.
+- `get_settings()` is `lru_cache`d and refuses to boot production with the default
+  `secret_key` or with insecure cookies.
+- Secrets stay in `.env` (gitignored); `.env.example` documents every key.
+- CORS origins are explicit. Never `allow_origins=["*"]` with credentials enabled —
+  the browser rejects it, and cookie auth depends on credentials.
+
+## Commands
+
+```bash
+cd backend
+poetry install
+poetry run fastapi dev src/app/main.py     # http://127.0.0.1:8000/docs
+poetry run pytest -q                        # needs a local mongod on :27017
+poetry run ruff check . && poetry run ruff format .
+poetry add <pkg>                            # never hand-edit pyproject deps
+```
+
+Tests run against a real `dock_test` database and drop it between tests; there is
+no mocking layer. Keep it that way — index behaviour and rotation semantics are
+exactly what mocks would get wrong.
+
+## Style
+
+- Full type hints; modern syntax (`str | None`, `list[str]`).
+- Ruff is linter and formatter, 88 columns.
+- Docstrings on modules and non-obvious functions; skip the obvious ones.
