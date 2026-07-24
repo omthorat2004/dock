@@ -5,6 +5,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { getQueryClient } from "@/lib/query-client";
 import { setSessionExpiredHandler } from "@/lib/axios.config";
+import { useAuthStore } from "@/lib/auth-store";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   // Not useState/useMemo: getQueryClient already returns a per-request client on
@@ -16,6 +17,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setSessionExpiredHandler(() => {
       queryClient.clear();
+      useAuthStore.getState().setUnauthenticated();
       router.replace("/login");
     });
     return () => setSessionExpiredHandler(null);

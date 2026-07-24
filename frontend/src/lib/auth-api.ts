@@ -5,6 +5,8 @@ export type User = {
   email: string;
   full_name: string;
   created_at: string;
+  /** Whether the user has stored a provider API key. The key itself never leaves the API. */
+  has_api_key: boolean;
 };
 
 export type RegisterPayload = {
@@ -18,24 +20,25 @@ export type LoginPayload = {
   password: string;
 };
 
-/** Returned for reference only — the usable copy is in the httpOnly cookies. */
-export type TokenPair = {
-  access_token: string;
-  refresh_token: string;
-  expires_in: number;
-  refresh_expires_in: number;
+/**
+ * What register/login/refresh return. The tokens are never in the body — they
+ * arrive as httpOnly cookies — so all JavaScript sees is the message and user.
+ */
+export type AuthResponse = {
+  message: string;
+  user: User;
 };
 
 /** Every call to the FastAPI auth routes lives here — one place per endpoint. */
 export const authApi = {
-  async register(payload: RegisterPayload): Promise<TokenPair> {
+  async register(payload: RegisterPayload): Promise<AuthResponse> {
     // The response also sets the auth cookies; nothing is stored client-side.
-    const { data } = await api.post<TokenPair>("/auth/register", payload);
+    const { data } = await api.post<AuthResponse>("/auth/register", payload);
     return data;
   },
 
-  async login(payload: LoginPayload): Promise<TokenPair> {
-    const { data } = await api.post<TokenPair>("/auth/login", payload);
+  async login(payload: LoginPayload): Promise<AuthResponse> {
+    const { data } = await api.post<AuthResponse>("/auth/login", payload);
     return data;
   },
 
@@ -44,7 +47,7 @@ export const authApi = {
     await api.post("/auth/logout");
   },
 
-  async me(): Promise<User> {
+  async getUser(): Promise<User> {
     const { data } = await api.get<User>("/auth/me");
     return data;
   },

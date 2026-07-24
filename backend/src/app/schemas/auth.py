@@ -48,6 +48,9 @@ class UserResponse(BaseModel):
     email: EmailStr
     full_name: str
     created_at: datetime
+    #: Whether the user has stored a provider API key. The key itself is never
+    #: returned — only whether the client should show the "configured" state.
+    has_api_key: bool = False
 
 
 class AuthResponse(BaseModel):

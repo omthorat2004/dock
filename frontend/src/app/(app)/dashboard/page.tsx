@@ -1,7 +1,7 @@
 "use client";
 
 import { ApiStatus } from "@/components/dashboard/api-status";
-import { useMe } from "@/hooks/use-auth";
+import { useUser } from "@/hooks/use-auth";
 
 /**
  * Test dashboard. Deliberately a shell: it proves auth, the axios instance and
@@ -10,7 +10,7 @@ import { useMe } from "@/hooks/use-auth";
  */
 export default function DashboardPage() {
   // Already fetched and cached by the layout's guard — this is a cache read.
-  const { data: user } = useMe();
+  const { user } = useUser();
   const firstName = user?.full_name.split(" ")[0] ?? "there";
 
   return (

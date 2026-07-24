@@ -3,6 +3,7 @@ import logging
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from google.genai import errors as genai_errors
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core.exceptions import AppError
@@ -17,6 +18,62 @@ def _response(status_code: int, code: str, detail: str, **extra) -> JSONResponse
     """
     return JSONResponse(
         status_code=status_code, content={"code": code, "detail": detail, **extra}
+    )
+
+
+# Phrases that mark a provider 400 as "the prompt blew the context window"
+# rather than "the key is bad" — both come back as 400s, so the message is the
+# only tell. Kept specific so a "token" in an auth message is not misread.
+_TOKEN_LIMIT_HINTS = (
+    "token count",
+    "input token",
+    "number of tokens",
+    "too many tokens",
+    "context length",
+    "context window",
+    "maximum context",
+)
+
+
+def classify_provider_error(
+    status_code: int | None, message: str
+) -> tuple[int, str, str]:
+    """Map an AI provider SDK error onto (http status, code, detail).
+
+    Pulled out of the handler so the branching is unit-testable without having
+    to hand-build a vendor SDK exception.
+    """
+    text = (message or "").lower()
+
+    if status_code == status.HTTP_429_TOO_MANY_REQUESTS:
+        return (
+            status.HTTP_429_TOO_MANY_REQUESTS,
+            "provider_rate_limited",
+            "The AI provider's rate limit was hit. Wait a moment, then retry.",
+        )
+
+    if any(hint in text for hint in _TOKEN_LIMIT_HINTS):
+        return (
+            status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            "token_limit_reached",
+            "Token limit reached for this session. Start a new session to continue.",
+        )
+
+    if status_code in (
+        status.HTTP_400_BAD_REQUEST,
+        status.HTTP_401_UNAUTHORIZED,
+        status.HTTP_403_FORBIDDEN,
+    ):
+        return (
+            status.HTTP_401_UNAUTHORIZED,
+            "invalid_provider_key",
+            "Your AI provider API key was rejected. Check the key and try again.",
+        )
+
+    return (
+        status.HTTP_502_BAD_GATEWAY,
+        "provider_error",
+        "The AI provider could not be reached. Please try again.",
     )
 
 
@@ -40,6 +97,23 @@ def register_error_handlers(app: FastAPI) -> None:
             detail,
             field=field,
         )
+
+    @app.exception_handler(genai_errors.APIError)
+    async def handle_provider_error(
+        _: Request, exc: genai_errors.APIError
+    ) -> JSONResponse:
+        """Turn an AI provider SDK error into the API's standard error shape.
+
+        The cases the frontend must tell apart are a rejected key, a hit rate
+        limit, and a prompt over the token limit; anything else is an upstream
+        failure the caller can only retry.
+        """
+        status_code, code, detail = classify_provider_error(
+            getattr(exc, "code", None), getattr(exc, "message", "") or ""
+        )
+        if status_code >= 500:
+            logger.exception("AI provider error", exc_info=exc)
+        return _response(status_code, code, detail)
 
     @app.exception_handler(StarletteHTTPException)
     async def handle_http_exception(

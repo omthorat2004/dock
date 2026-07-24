@@ -4,12 +4,15 @@ from fastapi import Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pymongo.asynchronous.database import AsyncDatabase
 
+from app.ai.base import AIProvider
+from app.ai.factory import build_provider
 from app.core.cookies import ACCESS_COOKIE
-from app.core.exceptions import AuthenticationError
+from app.core.exceptions import ApiKeyNotConfigured, AuthenticationError
 from app.core.security import decode_access_token
 from app.db.mongo import get_db
 from app.models.user import User
 from app.services.auth_service import AuthService
+from app.services.user_service import UserService
 
 # auto_error=False so a missing header falls through to the cookie.
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -22,6 +25,13 @@ def get_auth_service(db: DbDep) -> AuthService:
 
 
 AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
+
+
+def get_user_service(db: DbDep) -> UserService:
+    return UserService(db)
+
+
+UserServiceDep = Annotated[UserService, Depends(get_user_service)]
 
 
 async def get_current_user(
@@ -51,3 +61,17 @@ async def get_current_user(
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+async def get_ai_provider(user: CurrentUser) -> AIProvider:
+    """The caller's configured AI provider, or 401 if they have no key yet.
+
+    Routes that need the model depend on this instead of re-checking the key, so
+    the "no key configured" answer is one exception raised in one place.
+    """
+    if not user.api_key:
+        raise ApiKeyNotConfigured
+    return build_provider(user)
+
+
+AIProviderDep = Annotated[AIProvider, Depends(get_ai_provider)]

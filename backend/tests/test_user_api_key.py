@@ -1,0 +1,68 @@
+from app.core.constants import DEFAULT_MODEL_NAME, DEFAULT_MODEL_VERSION
+from tests.test_auth import VALID, register
+
+ENDPOINT = "/api/v1/users/api-key"
+
+
+def test_setting_a_key_requires_authentication(client):
+    # No session cookie: the endpoint must not be reachable.
+    assert client.post(ENDPOINT, json={"api_key": "sk-123"}).status_code == 401
+
+
+def test_a_signed_in_user_can_store_a_key(client):
+    register(client)  # leaves the auth cookies on the client
+    response = client.post(ENDPOINT, json={"api_key": "sk-123"})
+    assert response.status_code == 200
+    assert response.json()["message"]
+
+
+def test_storing_a_key_records_the_default_model(client):
+    register(client)
+    client.post(ENDPOINT, json={"api_key": "sk-123"})
+
+    # A configured key makes /me still work and leaves the defaults in place; we
+    # read the stored document straight from Mongo to prove the write shape.
+    from pymongo import MongoClient
+
+    from app.core.config import settings
+
+    with MongoClient(settings.mongodb_uri) as mongo:
+        doc = mongo[settings.mongodb_db]["users"].find_one({"email": VALID["email"]})
+
+    assert doc["api_key"] == "sk-123"
+    assert doc["model_name"] == DEFAULT_MODEL_NAME
+    assert doc["model_version"] == DEFAULT_MODEL_VERSION
+
+
+def test_an_empty_key_is_rejected(client):
+    register(client)
+    assert client.post(ENDPOINT, json={"api_key": ""}).status_code == 422
+
+
+def test_me_reports_whether_a_key_is_configured(client):
+    register(client)
+    assert client.get("/api/v1/auth/me").json()["has_api_key"] is False
+
+    client.post(ENDPOINT, json={"api_key": "sk-123"})
+    assert client.get("/api/v1/auth/me").json()["has_api_key"] is True
+
+
+def test_a_key_never_appears_in_the_me_response(client):
+    register(client)
+    client.post(ENDPOINT, json={"api_key": "sk-secret"})
+    body = client.get("/api/v1/auth/me").json()
+    assert "api_key" not in body
+
+
+def test_removing_a_key_clears_it(client):
+    register(client)
+    client.post(ENDPOINT, json={"api_key": "sk-123"})
+
+    response = client.delete(ENDPOINT)
+    assert response.status_code == 200
+    assert response.json()["message"]
+    assert client.get("/api/v1/auth/me").json()["has_api_key"] is False
+
+
+def test_removing_a_key_requires_authentication(client):
+    assert client.delete(ENDPOINT).status_code == 401

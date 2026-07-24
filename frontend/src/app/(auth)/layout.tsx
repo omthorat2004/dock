@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/logo";
+import { AuthProvider } from "@/components/auth/auth-provider";
 
 const proof = [
   "Syllabus and lesson notes stay in the space",
@@ -27,7 +28,9 @@ export default function AuthLayout({
         </header>
 
         <main className="flex flex-1 items-center justify-center py-12">
-          <div className="w-full max-w-sm">{children}</div>
+          <div className="w-full max-w-sm">
+            <AuthProvider>{children}</AuthProvider>
+          </div>
         </main>
 
         <p className="text-center text-xs text-muted">

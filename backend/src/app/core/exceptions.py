@@ -68,3 +68,15 @@ class EmailAlreadyRegistered(ConflictError):
 class InvalidCredentials(AuthenticationError):
     code = "invalid_credentials"
     message = "Incorrect email or password."
+
+
+class ApiKeyNotConfigured(AuthenticationError):
+    # 401 on purpose: the caller is authenticated to Dock but has not yet given
+    # us the third-party key the request needs, so it cannot proceed.
+    status_code = 401
+    message = "Add your AI provider API key before using the model."
+
+
+class UnsupportedProvider(ValidationError):
+    status_code = 422
+    message = "That model provider is not supported."

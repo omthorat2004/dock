@@ -3,6 +3,8 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
+from app.core.constants import DEFAULT_MODEL_NAME, DEFAULT_MODEL_VERSION
+
 COLLECTION = "users"
 
 
@@ -25,6 +27,20 @@ class User(BaseModel):
     hashed_password: str
     is_active: bool = True
     created_at: datetime = Field(default_factory=utcnow)
+
+    # AI provider config. `model_name` selects the provider, so the key stays
+    # provider-agnostic — one `api_key`, not `gemini_api_key`. The key is stored
+    # because we must replay it to the vendor, so unlike the refresh token it
+    # cannot be hashed; it must be encrypted at rest before production. None
+    # until the user configures it.
+    api_key: str | None = None
+    model_name: str = DEFAULT_MODEL_NAME
+    model_version: str = DEFAULT_MODEL_VERSION
+
+    @property
+    def has_api_key(self) -> bool:
+        """Whether a provider key is configured — safe to expose; the key is not."""
+        return bool(self.api_key)
 
     @classmethod
     def from_document(cls, document: dict[str, Any]) -> "User":
