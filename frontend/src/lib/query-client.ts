@@ -1,4 +1,7 @@
-import { QueryClient, isServer } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
+
+// TanStack's `isServer` export is deprecated; this is the same check it ran.
+const isServer = typeof window === "undefined";
 
 function makeQueryClient() {
   return new QueryClient({

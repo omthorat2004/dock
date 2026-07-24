@@ -7,6 +7,8 @@ export type User = {
   created_at: string;
   /** Whether the user has stored a provider API key. The key itself never leaves the API. */
   has_api_key: boolean;
+  /** The model the user has selected, e.g. "gemini-3.6-flash". */
+  model_version: string;
 };
 
 export type RegisterPayload = {

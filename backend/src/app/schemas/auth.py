@@ -51,6 +51,9 @@ class UserResponse(BaseModel):
     #: Whether the user has stored a provider API key. The key itself is never
     #: returned — only whether the client should show the "configured" state.
     has_api_key: bool = False
+    #: The model the user has selected. Not a secret, so the client can show it
+    #: as the current choice in the model picker.
+    model_version: str
 
 
 class AuthResponse(BaseModel):

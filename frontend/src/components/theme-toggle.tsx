@@ -16,7 +16,18 @@ function subscribe(onChange: () => void) {
   listeners.add(onChange);
   media.addEventListener("change", onChange);
   // Keep other tabs in sync.
-  window.addEventListener("storage", onChange);
+  
+const onStorage = (e: StorageEvent) => {
+    if (e.key !== THEME_STORAGE_KEY) return;         // ignore unrelated keys
+    const next = e.newValue;
+    if (next === "light" || next === "dark") {
+      document.documentElement.dataset.theme = next; 
+    } else if (next === null) {
+      delete document.documentElement.dataset.theme; 
+    }
+    onChange();                                   
+  };
+  window.addEventListener("storage", onStorage);
 
   return () => {
     listeners.delete(onChange);
@@ -34,7 +45,7 @@ function getSnapshot(): Theme {
     : "light";
 }
 
-// The server cannot know the OS preference, so it renders the neutral state.
+
 const getServerSnapshot = (): Theme | null => null;
 
 export function ThemeToggle() {

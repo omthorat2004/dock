@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authKeys } from "@/hooks/use-auth";
 import type { ApiError } from "@/lib/axios.config";
-import { userApi } from "@/lib/user-api";
+import { type ApiKeyConfig, userApi } from "@/lib/user-api";
 
 /**
  * Store, then remove, the caller's provider API key.
@@ -14,8 +14,8 @@ import { userApi } from "@/lib/user-api";
 export function useSetApiKey() {
   const queryClient = useQueryClient();
 
-  return useMutation<unknown, ApiError, string>({
-    mutationFn: (apiKey) => userApi.setApiKey(apiKey),
+  return useMutation<unknown, ApiError, ApiKeyConfig>({
+    mutationFn: (config) => userApi.setApiKey(config),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: authKeys.user }),
   });

@@ -16,7 +16,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 async def set_api_key(
     payload: ApiKeyRequest, user: CurrentUser, service: UserServiceDep
 ) -> MessageResponse:
-    await service.configure_api_key(user.id, payload.api_key)
+    await service.configure_api_key(user.id, payload.api_key, payload.model_version)
     return MessageResponse(message="API key saved.")
 
 

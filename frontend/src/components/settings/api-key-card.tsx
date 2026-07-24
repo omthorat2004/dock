@@ -5,6 +5,7 @@ import { FormError } from "@/components/auth/form-error";
 import { buttonStyles } from "@/components/ui/button";
 import { useRemoveApiKey, useSetApiKey } from "@/hooks/use-api-key";
 import { useUser } from "@/hooks/use-auth";
+import { DEFAULT_GEMINI_MODEL, GEMINI_MODELS } from "@/lib/gemini-models";
 
 export function ApiKeyCard() {
   const { user } = useUser();
@@ -12,28 +13,44 @@ export function ApiKeyCard() {
   const removeKey = useRemoveApiKey();
 
   const [value, setValue] = useState("");
+  const [model, setModel] = useState(user?.model_version ?? DEFAULT_GEMINI_MODEL);
   const [reveal, setReveal] = useState(false);
-  // The key we have stored this session, so Save can go quiet until the field
+  // What we have stored this session, so Save can go quiet until something
   // changes. We never echo the stored key back from the server, so after a
-  // reload this is empty even when a key is configured.
-  const [lastSaved, setLastSaved] = useState("");
+  // reload `lastSavedKey` is empty even when a key is configured.
+  const [lastSavedKey, setLastSavedKey] = useState("");
+  const [lastSavedModel, setLastSavedModel] = useState(
+    user?.model_version ?? DEFAULT_GEMINI_MODEL,
+  );
 
   const configured = user?.has_api_key ?? false;
   const trimmed = value.trim();
-  const dirty = trimmed.length > 0 && trimmed !== lastSaved;
+  // A key is required on every save (the backend takes both together), so the
+  // model can only change when a key is present too.
+  const dirty =
+    trimmed.length > 0 &&
+    (trimmed !== lastSavedKey || model !== lastSavedModel);
   const busy = setKey.isPending || removeKey.isPending;
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!dirty) return;
-    setKey.mutate(trimmed, { onSuccess: () => setLastSaved(trimmed) });
+    setKey.mutate(
+      { apiKey: trimmed, modelVersion: model },
+      {
+        onSuccess: () => {
+          setLastSavedKey(trimmed);
+          setLastSavedModel(model);
+        },
+      },
+    );
   }
 
   function onRemove() {
     removeKey.mutate(undefined, {
       onSuccess: () => {
         setValue("");
-        setLastSaved("");
+        setLastSavedKey("");
         setReveal(false);
       },
     });
@@ -45,12 +62,32 @@ export function ApiKeyCard() {
         <h2 className="text-lg font-semibold tracking-tight">Gemini API key</h2>
         <p className="text-pretty text-sm leading-relaxed text-muted">
           Dock uses your own Google Gemini key to power the model. The free tier
-          is enough to start — paste the key below and it stays on your account.
+          is enough to start — pick a model, paste your key, and both stay on
+          your account.
         </p>
       </header>
 
       <form onSubmit={onSubmit} className="mt-5 space-y-4" noValidate>
         <FormError message={setKey.error?.message ?? removeKey.error?.message} />
+
+        <div className="space-y-1.5">
+          <label htmlFor="model" className="block text-sm font-medium">
+            Model
+          </label>
+          <select
+            id="model"
+            name="model"
+            value={model}
+            onChange={(event) => setModel(event.target.value)}
+            className="w-full rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20"
+          >
+            {GEMINI_MODELS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
 
         <div className="space-y-1.5">
           <label htmlFor="api-key" className="block text-sm font-medium">
