@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { ApiStatus } from "@/components/dashboard/api-status";
+import { CreateSpaceModal } from "@/components/spaces/create-space-modal";
+import { buttonStyles } from "@/components/ui/button";
 import { useUser } from "@/hooks/use-auth";
 
 /**
@@ -12,6 +15,8 @@ export default function DashboardPage() {
   // Already fetched and cached by the layout's guard — this is a cache read.
   const { user } = useUser();
   const firstName = user?.full_name.split(" ")[0] ?? "there";
+
+  const [creating, setCreating] = useState(false);
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-12">
@@ -30,18 +35,31 @@ export default function DashboardPage() {
       </section>
 
       <section className="mt-10" aria-label="Your spaces">
-        <h2 className="text-sm font-semibold uppercase tracking-widest text-muted">
-          Your spaces
-        </h2>
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-muted">
+            Your spaces
+          </h2>
+          <button
+            type="button"
+            onClick={() => setCreating(true)}
+            className={buttonStyles("primary", "px-3 py-1.5 text-xs")}
+          >
+            Create a space
+          </button>
+        </div>
 
         <div className="mt-4 rounded-xl border border-dashed border-border bg-subtle p-10 text-center">
           <p className="text-sm font-medium">No spaces yet</p>
           <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted">
-            Creating a space — sharing a lesson and the syllabus section it
-            covers — arrives in the next release.
+            Create a space — share a lesson and the syllabus section it covers —
+            to start revising.
           </p>
         </div>
       </section>
+
+      {/* TODO: pass onCreate to POST to the spaces API once it exists. The modal
+          collects the lesson and its syllabus topics; nothing persists yet. */}
+      <CreateSpaceModal open={creating} onClose={() => setCreating(false)} />
     </div>
   );
 }
