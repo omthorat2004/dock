@@ -31,3 +31,13 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ user: null, status: "unauthenticated", isAuthenticated: false }),
   setLoading: () => set({ status: "loading" }),
 }));
+
+/**
+ * Subscribe to just the authenticated flag.
+ *
+ * Reads whatever `useAuthSync` last wrote, so a component using this must be
+ * inside a subtree that runs the sync (the auth/protected providers, or the
+ * marketing header) — otherwise the store stays at its unauthenticated default.
+ */
+export const useIsAuthenticated = () =>
+  useAuthStore((state) => state.isAuthenticated);
