@@ -21,14 +21,15 @@ backend/
   pyproject.toml          # Poetry; packages = [{include = "app", from = "src"}]
   src/app/
     main.py               # FastAPI instance, CORS, lifespan, error handlers, router
-    dependencies.py       # DbDep, AuthServiceDep, CurrentUser
+    dependencies.py       # DbDep, AuthServiceDep, UserServiceDep, CurrentUser, AIProviderDep
     router/               # HTTP layer — __init__.py aggregates api_router
-      auth.py  health.py
-    services/             # business logic, class-based (AuthService)
+      auth.py  health.py  user.py
+    services/             # business logic, class-based (AuthService, UserService)
     dao/                  # data access, class-based (BaseDAO, UserDAO, ...)
+    ai/                   # AIProvider ABC, GeminiProvider, build_provider factory
     models/               # Pydantic document models (+ from_document/to_document)
     schemas/              # request/response models
-    core/                 # config, security, hashing, cookies, exceptions, error_handlers
+    core/                 # config, constants, security, hashing, cookies, exceptions, error_handlers
     db/mongo.py           # client, get_db, connect/disconnect, indexes
   tests/
 ```
@@ -60,8 +61,9 @@ leaves the API in one shape:
 ```
 
 Handlers cover `AppError`, `RequestValidationError` (flattened to one message plus
-`field`), `StarletteHTTPException`, and a catch-all that logs the traceback and
-returns a generic 500. Never let a driver message or stack trace reach a client.
+`field`), `StarletteHTTPException`, the AI provider SDK error (see *AI providers*),
+and a catch-all that logs the traceback and returns a generic 500. Never let a
+driver message or stack trace reach a client.
 
 ## Async everything
 
@@ -93,13 +95,17 @@ Two jobs, two algorithms — do not mix them up:
 - **Passwords** → `PasswordHasher` (bcrypt): slow and salted, because passwords are
   low-entropy and guessable. Inputs are capped at 72 bytes; bcrypt silently
   truncates beyond that.
-- **API keys and opaque tokens** → `TokenHasher` (HMAC-SHA256 keyed with
+- **Opaque tokens we verify** → `TokenHasher` (HMAC-SHA256 keyed with
   `secret_key`): fast and *deterministic*, so a record can be found by its hash.
-  bcrypt cannot do that. This is what stores refresh tokens, and what will store
-  user-supplied API keys.
+  bcrypt cannot do that. This is what stores refresh tokens.
 
-Both verifications are constant-time. Never bcrypt an API key; never SHA-256 a
+Both verifications are constant-time. Never bcrypt an opaque token; never SHA-256 a
 password.
+
+A user's **AI provider API key is the exception**: we have to replay it to the
+vendor, so it cannot be hashed (hashing is one-way). It lives on the user document
+as `api_key`, must be **encrypted at rest** before production, and is never
+returned to the client — only whether one is set (`has_api_key`).
 
 ## Auth: access + refresh
 
@@ -116,11 +122,36 @@ password.
   httpOnly cookies on register, login and refresh, and clears them on logout. The
   frontend stores nothing. `COOKIE_SECURE` must be true in production — the config
   refuses to boot otherwise.
+- **Response bodies carry no tokens.** Register / login / refresh return
+  `AuthResponse` (`{ message, user }`); the tokens live only in the cookies. The
+  body never exposes the access or refresh token.
 - `get_current_user` reads the access token from the cookie first, falling back to
   a bearer header for scripts and tests. Auth is enforced by the `CurrentUser`
   dependency, never by ad-hoc checks in a route body.
 - Login failures return one generic 401 for every cause — never reveal whether an
   email exists. Registration's 409 is the one intentional exception.
+
+## AI providers (`app/ai/`)
+
+Chat runs through a provider abstraction, so no vendor SDK is imported outside
+`app/ai/`:
+
+- `AIProvider` (ABC) has one async method: `chat(message) -> str`.
+- `GeminiProvider` wraps `google-genai` (`client.aio.interactions.create`).
+- `build_provider(user)` picks the provider from the user's stored preferences —
+  `model_name` selects the family (only `"gemini"` today), `model_version` is the
+  model string. It raises `ApiKeyNotConfigured` (401) when the user has no key.
+- The `AIProviderDep` dependency runs that check and injects a ready provider, so
+  a route needing the model never re-checks the key. The user sets their key +
+  model through `POST /users/api-key` (`UserService`); `DELETE` clears it.
+  Defaults live in `core/constants.py` (`DEFAULT_MODEL_NAME`,
+  `DEFAULT_MODEL_VERSION`).
+- **Vendor SDK errors are handled globally.** A dedicated
+  `google.genai.errors.APIError` handler in `core/error_handlers.py`
+  (`classify_provider_error`) maps them: rate limit → 429 `provider_rate_limited`,
+  over the context window → 413 `token_limit_reached`, rejected key → 401
+  `invalid_provider_key`, otherwise → 502 `provider_error`. Providers let the SDK
+  error propagate — the handler is the one place it is translated.
 
 ## Config
 

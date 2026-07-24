@@ -6,7 +6,8 @@ out as cards on a grid canvas. Clicking a card opens a tutor scoped to that topi
 or the videos matched to it.
 
 This repo currently holds the **foundation**: the marketing site, accounts, and the
-Next.js + FastAPI base. Spaces and the canvas come next.
+Next.js + FastAPI base — plus per-user AI setup (bring a Gemini key, pick a model)
+and the create-a-space modal. Persisting spaces and the canvas come next.
 
 ## Stack
 
@@ -16,7 +17,9 @@ Next.js + FastAPI base. Spaces and the canvas come next.
 | Data layer | axios (single global instance) + TanStack Query v5 |
 | Backend | FastAPI, Python 3.12+, Poetry (src layout) |
 | Database | MongoDB (native async `pymongo`) |
-| Auth | JWT access + refresh, rotated, in httpOnly cookies |
+| Auth | JWT access + refresh, rotated, in httpOnly cookies (responses carry `{ message, user }`, never tokens) |
+| AI | Bring-your-own Gemini key + model, behind an `app/ai` provider abstraction |
+| Client state | zustand — auth status only; the server (TanStack Query) stays the source of truth |
 
 The frontend talks to FastAPI **directly**. Next.js does not proxy the API — there
 are no route handlers forwarding requests.
@@ -59,8 +62,8 @@ Backend tests run against a real `dock_test` database and drop it between tests.
 
 ```
 .claude/skills/     product-model, design-system, frontend-nextjs, backend-fastapi
-backend/src/app/    router/ → services/ → dao/ → mongo
-frontend/src/       app/ (route groups), components/, hooks/, lib/
+backend/src/app/    router/ → services/ → dao/ → mongo, plus ai/ (provider layer)
+frontend/src/       app/ (route groups), components/, hooks/, lib/ (incl. auth-store.ts)
 ```
 
 ## Pages
@@ -70,8 +73,9 @@ frontend/src/       app/ (route groups), components/, hooks/, lib/
 | `/` | Landing — hero, canvas preview, how it works |
 | `/features` | Spaces, canvas, learn mode, video shelf, progress |
 | `/about` | Why it exists, principles, roadmap |
-| `/login`, `/register` | Auth, split layout |
-| `/dashboard`, `/spaces` | Signed-in shells, behind `AuthGuard` |
+| `/login`, `/register` | Auth, split layout, behind `AuthProvider` |
+| `/dashboard`, `/spaces` | Signed-in shells, behind `ProtectedProvider` |
+| `/api-key` | Configure your Gemini key + model (signed-in) |
 
 ## Conventions
 

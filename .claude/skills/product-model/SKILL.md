@@ -43,6 +43,14 @@ single topic — never off a space as a whole. That scoping is the whole point o
 product: a card's conversation knows one topic of one lesson, at the depth the
 syllabus asks for.
 
+## Bringing your own model
+
+Learn-mode chat runs on the user's **own** AI provider key. On the API-key page a
+user pastes a Gemini key and picks a model; both are stored on their account. The
+key is required before any chat call, and the product prompts for it rather than
+shipping a shared key. The key is never shown back — the app only exposes whether
+one is set. Provider details live in the `backend-fastapi` skill.
+
 ## Deliberately out of scope
 
 Do not add these, and do not write copy implying them:
@@ -73,3 +81,7 @@ about what ships today. `/about` states the roadmap honestly — keep it that wa
 Plain, concrete, second person. Short sentences. No exclamation marks, no "AI-powered",
 no "revolutionise", no growth-hack urgency. Describe what the product does for one
 student the night before an exam.
+
+On **marketing pages**, avoid the internal word "canvas" — visitors don't parse it.
+Describe it instead ("a grid of cards", "topic cards"). "Canvas" stays the term in
+code and in this vocabulary, just not in front of prospective users.

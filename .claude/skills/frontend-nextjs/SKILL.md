@@ -6,8 +6,8 @@ description: Conventions for the Dock Next.js frontend — App Router structure,
 # Frontend — Next.js (App Router)
 
 Stack: **Next.js 16**, React 19, TypeScript (strict), Tailwind CSS v4,
-**axios**, **TanStack Query v5**, ESLint. Located in `frontend/`. Pair this with
-the `design-system` skill for anything visual.
+**axios**, **TanStack Query v5**, **zustand** (auth state only), ESLint. Located in
+`frontend/`. Pair this with the `design-system` skill for anything visual.
 
 > This is **not** the Next.js in your training data. `frontend/AGENTS.md` says it
 > outright: read `node_modules/next/dist/docs/` before using an API you are
@@ -53,11 +53,11 @@ src/
       layout.tsx  page.tsx  features/  about/
     (auth)/               # login + register — split layout, no site chrome
       layout.tsx  loading.tsx  login/  register/
-    (app)/                # signed-in surfaces — AuthGuard + app chrome
-      layout.tsx  loading.tsx  dashboard/  spaces/
-  components/             # presentational; subfoldered (auth/, dashboard/, ui/)
-  hooks/                  # use-auth.ts (TanStack), use-async.ts
-  lib/                    # axios.config.ts, query-client.ts, *-api.ts, validation.ts
+    (app)/                # signed-in surfaces — ProtectedProvider + app chrome
+      layout.tsx  loading.tsx  dashboard/  spaces/  api-key/
+  components/             # presentational; subfoldered (auth/, dashboard/, spaces/, settings/, ui/)
+  hooks/                  # use-auth.ts, use-api-key.ts (TanStack), use-async.ts
+  lib/                    # axios.config.ts, query-client.ts, auth-store.ts (zustand), *-api.ts, gemini-models.ts, validation.ts
 ```
 
 Route groups keep each area's chrome separate without touching the URL. Keep that
@@ -89,12 +89,12 @@ boundary.
   `components/providers.tsx`. One client per server request, one singleton in the
   browser — a module-scope client would leak one user's cache into another's
   request.
-- **Queries** for anything read repeatedly (`useMe`, API health). **Mutations**
-  for login, register, logout. Query keys are declared as objects (`authKeys`),
-  never inline strings scattered across files.
+- **Queries** for anything read repeatedly (`useUser`, API health). **Mutations**
+  for login, register, logout, and the API-key config. Query keys are declared as
+  objects (`authKeys`), never inline strings scattered across files.
 - `retry: false` on auth queries: a 401 is a legitimate answer ("nobody is signed
   in"), not a transient failure.
-- Invalidate `authKeys.me` after anything that changes the session.
+- Invalidate `authKeys.user` after anything that changes the session or the user.
 
 `hooks/use-async.ts` also exists for one-shot imperative async that has nothing to
 cache. If the result should be cached, shared or refetched, use TanStack Query
@@ -105,13 +105,25 @@ instead — that is the default.
 - The **backend** issues httpOnly cookies (`dock_access`, `dock_refresh`) on
   register, login and refresh, and clears them on logout. The frontend stores
   nothing — no `localStorage`, no `sessionStorage`, no cookie writing.
-- `AuthGuard` (`components/auth/auth-guard.tsx`) wraps `(app)/layout.tsx`: it calls
-  `useMe()`, redirects to `/login` on error, and renders a skeleton meanwhile
-  rather than flashing the page to a user who will bounce.
+- The server is the source of truth: `useUser()` (`hooks/use-auth.ts`) queries
+  `/auth/me`. `useAuthSync()` mirrors that query into a small **zustand** store
+  (`lib/auth-store.ts`) — `status` / `isAuthenticated` — so providers and chrome
+  read one shared, synchronous value. The store is a *mirror* of the query; do not
+  put state in it the query does not own.
+- Two providers gate on that state, each running `useAuthSync` once:
+  - `ProtectedProvider` wraps `(app)/layout.tsx` — redirects to `/login` when not
+    authenticated, shows a shimmer while resolving.
+  - `AuthProvider` wraps the `(auth)` routes — sends an already-signed-in user to
+    `/dashboard`.
+- The marketing `SiteHeader` also runs `useAuthSync`, so it shows a Dashboard link
+  vs the sign-up CTA — holding a placeholder while `isPending`.
+- Login/register **seed** the user into the cache from the `{ message, user }`
+  response instead of refetching `/auth/me`.
 - When a refresh fails, the interceptor calls the handler registered by
-  `Providers`, which clears the cache and redirects to `/login`.
-- Because auth is cookie-based and checked client-side, signed-in pages are client
-  components. Marketing pages stay server components.
+  `Providers`, which clears the query cache, resets the store and redirects to
+  `/login`.
+- Because auth is cookie-based and checked client-side, signed-in pages (and the
+  marketing header) are client components. Marketing *pages* stay server components.
 
 ## Forms
 

@@ -81,7 +81,18 @@ the border, not the background.
 
 **Inputs** — `rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm`,
 focus `border-accent ring-2 ring-accent/20`. Every input has a real `<label>`.
-Errors set `aria-invalid` and are announced via `aria-describedby`.
+Errors set `aria-invalid` and are announced via `aria-describedby`. A reveal toggle
+(e.g. an API key) is a ghost icon button inside the field's right padding, with a
+dynamic `aria-label` / `aria-pressed`.
+
+**Modal** (`components/ui/modal.tsx`) — a labelled `role="dialog"` panel:
+`rounded-xl border border-border bg-surface p-6 shadow-md` over a `bg-black/50`
+backdrop. Closes on Escape and backdrop click, locks body scroll, and moves focus
+into the panel. No animation, no portal.
+
+**Chips** — removable pills for a set of entered values (e.g. syllabus topics):
+`rounded-full border border-border bg-subtle`, each with a cross button carrying
+`aria-label="Remove {label}"`.
 
 ## The canvas grid
 
