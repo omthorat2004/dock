@@ -48,3 +48,14 @@ class UserResponse(BaseModel):
     email: EmailStr
     full_name: str
     created_at: datetime
+
+
+class AuthResponse(BaseModel):
+    """Body for register/login/refresh.
+
+    The tokens never travel in the body — they are set as httpOnly cookies. All
+    the client gets back is a message and the signed-in user.
+    """
+
+    message: str
+    user: UserResponse

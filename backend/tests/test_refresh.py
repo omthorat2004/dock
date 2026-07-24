@@ -10,11 +10,13 @@ def test_register_sets_both_cookies(client):
     assert response.cookies.get(REFRESH_COOKIE)
 
 
-def test_register_returns_both_tokens(client):
+def test_register_keeps_tokens_out_of_the_body(client):
     body = register(client).json()
-    assert body["access_token"]
-    assert body["refresh_token"]
-    assert body["refresh_expires_in"] > body["expires_in"]
+    # Both tokens are set as cookies; the body carries only a message and user.
+    assert body["message"]
+    assert body["user"]["email"] == VALID["email"]
+    assert "access_token" not in body
+    assert "refresh_token" not in body
 
 
 def test_the_cookie_alone_authenticates(client):

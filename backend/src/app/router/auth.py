@@ -4,9 +4,9 @@ from app.core.cookies import REFRESH_COOKIE, clear_auth_cookies, set_auth_cookie
 from app.core.exceptions import AuthenticationError
 from app.dependencies import AuthServiceDep, CurrentUser
 from app.schemas.auth import (
+    AuthResponse,
     LoginRequest,
     RegisterRequest,
-    TokenResponse,
     UserResponse,
 )
 
@@ -22,34 +22,40 @@ def _refresh_token_from(request: Request) -> str:
 
 @router.post(
     "/register",
-    response_model=TokenResponse,
+    response_model=AuthResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Create an account and start a session",
 )
 async def register(
     payload: RegisterRequest, response: Response, service: AuthServiceDep
-) -> TokenResponse:
-    tokens = await service.register(payload)
+) -> AuthResponse:
+    tokens, user = await service.register(payload)
     set_auth_cookies(response, tokens)
-    return tokens
+    return AuthResponse(
+        message="Welcome to Dock.",
+        user=UserResponse.model_validate(user, from_attributes=True),
+    )
 
 
 @router.post(
     "/login",
-    response_model=TokenResponse,
+    response_model=AuthResponse,
     summary="Exchange credentials for a session",
 )
 async def login(
     payload: LoginRequest, response: Response, service: AuthServiceDep
-) -> TokenResponse:
-    tokens = await service.login(payload)
+) -> AuthResponse:
+    tokens, user = await service.login(payload)
     set_auth_cookies(response, tokens)
-    return tokens
+    return AuthResponse(
+        message="Signed in.",
+        user=UserResponse.model_validate(user, from_attributes=True),
+    )
 
 
 @router.post(
     "/refresh",
-    response_model=TokenResponse,
+    response_model=AuthResponse,
     summary="Rotate the session using the refresh cookie",
     description=(
         "Reads the refresh token from its httpOnly cookie, revokes it and issues "
@@ -58,10 +64,13 @@ async def login(
 )
 async def refresh(
     request: Request, response: Response, service: AuthServiceDep
-) -> TokenResponse:
-    tokens = await service.refresh(_refresh_token_from(request))
+) -> AuthResponse:
+    tokens, user = await service.refresh(_refresh_token_from(request))
     set_auth_cookies(response, tokens)
-    return tokens
+    return AuthResponse(
+        message="Session refreshed.",
+        user=UserResponse.model_validate(user, from_attributes=True),
+    )
 
 
 @router.post(

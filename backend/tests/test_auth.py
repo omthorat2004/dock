@@ -15,13 +15,15 @@ def test_health(client):
     assert response.json()["status"] == "ok"
 
 
-def test_register_returns_a_token(client):
+def test_register_returns_message_and_user(client):
     response = register(client)
     assert response.status_code == 201
+    # Tokens ride in httpOnly cookies, never the body.
+    assert response.cookies.get("dock_access")
     body = response.json()
-    assert body["access_token"]
-    assert body["token_type"] == "bearer"
-    assert body["expires_in"] > 0
+    assert body["message"]
+    assert body["user"]["email"] == VALID["email"]
+    assert "access_token" not in body
 
 
 def test_register_rejects_a_duplicate_email(client):
@@ -53,7 +55,8 @@ def test_login_succeeds_with_correct_credentials(client):
         json={"email": VALID["email"], "password": VALID["password"]},
     )
     assert response.status_code == 200
-    assert response.json()["access_token"]
+    assert response.cookies.get("dock_access")
+    assert response.json()["user"]["email"] == VALID["email"]
 
 
 def test_login_failures_are_indistinguishable(client):
@@ -71,7 +74,11 @@ def test_login_failures_are_indistinguishable(client):
 
 
 def test_me_returns_the_current_user(client):
-    token = register(client).json()["access_token"]
+    # The access token now lives only in the cookie; read it from there to
+    # exercise the Bearer path, then drop the cookies so the header is the only
+    # credential in play.
+    token = register(client).cookies.get("dock_access")
+    client.cookies.clear()
     response = client.get(
         "/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"}
     )

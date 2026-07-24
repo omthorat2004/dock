@@ -35,7 +35,7 @@ class AuthService:
         self.users = UserDAO(db)
         self.refresh_tokens = RefreshTokenDAO(db)
 
-    async def register(self, payload: RegisterRequest) -> TokenResponse:
+    async def register(self, payload: RegisterRequest) -> tuple[TokenResponse, User]:
         user = User(
             _id=str(uuid.uuid4()),
             email=payload.email,
@@ -52,9 +52,9 @@ class AuthService:
             raise EmailAlreadyRegistered from exc
 
         tokens, _ = await self._issue_pair(user)
-        return tokens
+        return tokens, user
 
-    async def login(self, payload: LoginRequest) -> TokenResponse:
+    async def login(self, payload: LoginRequest) -> tuple[TokenResponse, User]:
         user = await self.users.get_by_email(payload.email)
 
         # One generic error for every failure mode: a wrong password and an
@@ -65,9 +65,9 @@ class AuthService:
             raise InvalidCredentials
 
         tokens, _ = await self._issue_pair(user)
-        return tokens
+        return tokens, user
 
-    async def refresh(self, refresh_token: str) -> TokenResponse:
+    async def refresh(self, refresh_token: str) -> tuple[TokenResponse, User]:
         """Exchange a refresh token for a new pair, rotating the old one."""
         payload = decode_refresh_token(refresh_token)
         if payload is None or not payload.jti:
@@ -93,7 +93,7 @@ class AuthService:
 
         tokens, new_jti = await self._issue_pair(user)
         await self.refresh_tokens.revoke(stored.id, replaced_by=new_jti)
-        return tokens
+        return tokens, user
 
     async def logout(self, refresh_token: str) -> None:
         """Revoke a single session. Unknown tokens are a no-op, not an error."""
