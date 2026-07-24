@@ -95,7 +95,7 @@ export function CanvasPreview() {
   return (
     <div
       role="img"
-      aria-label="A Dock space for one lesson on normalisation: its topics laid out as cards on a grid canvas, each showing revision progress and the number of videos available."
+      aria-label="A Dock space for one lesson on normalisation: its topics laid out as cards on a grid, each showing revision progress and the number of videos available."
       className="relative aspect-[16/10] w-full overflow-hidden rounded-xl border border-border bg-background shadow-sm"
     >
       <div aria-hidden className="absolute inset-0 grid-surface" />

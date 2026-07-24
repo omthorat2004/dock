@@ -7,7 +7,7 @@ const steps = [
   {
     step: "01",
     title: "Create a space",
-    body: "One space per lesson. Name it, and that is your canvas.",
+    body: "One space per lesson. Name it, and start adding topics.",
   },
   {
     step: "02",
@@ -34,7 +34,7 @@ const highlights = [
   },
   {
     title: "The whole lesson, one screen",
-    body: "A grid canvas beats a folder tree. Arrange the lesson's topics and see at a glance what you have not touched yet.",
+    body: "A grid of cards beats a folder tree. Arrange the lesson's topics and see at a glance what you have not touched yet.",
     icon: <path d="M3 3h8v8H3V3Zm10 0h8v8h-8V3ZM3 13h8v8H3v-8Zm10 0h8v8h-8v-8Z" />,
   },
   {
@@ -66,7 +66,7 @@ export default function LandingPage() {
             </Link>
 
             <h1 className="mt-6 text-balance text-4xl font-semibold leading-[1.1] tracking-tight sm:text-5xl">
-              Revise on a canvas that remembers your syllabus
+              Revise on a grid of cards that remembers your syllabus
             </h1>
 
             <p className="mx-auto mt-5 max-w-2xl text-pretty text-base leading-relaxed text-muted sm:text-lg">
@@ -129,7 +129,7 @@ export default function LandingPage() {
             How it works
           </p>
           <h2 className="mt-3 text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
-            From one lesson to a working canvas
+            From one lesson to a grid of topic cards
           </h2>
         </div>
 
@@ -189,7 +189,7 @@ export default function LandingPage() {
         <GridBackdrop />
         <div className="mx-auto w-full max-w-3xl px-6 py-20 text-center">
           <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
-            Put your next exam on a canvas
+            Put your next exam on a grid of cards
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-pretty text-muted">
             Create a space, add the syllabus, and start with the topic you have

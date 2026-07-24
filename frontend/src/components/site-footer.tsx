@@ -6,15 +6,8 @@ const columns = [
     title: "Product",
     links: [
       { href: "/features", label: "Features" },
-      { href: "/features#canvas", label: "The canvas" },
+      { href: "/features#canvas", label: "Topic cards" },
       { href: "/features#videos", label: "Video library" },
-    ],
-  },
-  {
-    title: "Company",
-    links: [
-      { href: "/about", label: "About" },
-      { href: "/about#principles", label: "Principles" },
     ],
   },
   {
@@ -33,7 +26,7 @@ export function SiteFooter() {
         <div className="space-y-3">
           <Logo />
           <p className="max-w-[24ch] text-sm text-muted">
-            A canvas for revising what you actually have to learn.
+            A space for revising what you actually have to learn.
           </p>
         </div>
 

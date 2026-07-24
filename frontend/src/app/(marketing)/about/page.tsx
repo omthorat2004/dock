@@ -16,7 +16,7 @@ const principles = [
   },
   {
     title: "Space beats a scrollback",
-    body: "A lesson is structured, not linear. A canvas keeps that structure visible instead of burying it in chat history.",
+    body: "A lesson is structured, not linear. A grid of cards keeps that structure visible instead of burying it in chat history.",
   },
   {
     title: "One surface, no tab hopping",
@@ -36,7 +36,7 @@ const timeline = [
   },
   {
     phase: "Next",
-    title: "Spaces and the canvas",
+    title: "Spaces and topic cards",
     body: "Create a space for a lesson, share it with its syllabus section, and get topic cards laid out on the grid.",
   },
   {
@@ -89,7 +89,7 @@ export default function AboutPage() {
               card, progress tracked per card.
             </p>
             <p className="text-foreground">
-              The result is a canvas you open in week one and still open the
+              The result is a space you open in week one and still open the
               night before the exam.
             </p>
           </div>
@@ -145,7 +145,7 @@ export default function AboutPage() {
       <section className="border-t border-border bg-subtle">
         <div className="mx-auto w-full max-w-3xl px-6 py-20 text-center">
           <h2 className="text-balance text-3xl font-semibold tracking-tight">
-            Come build the canvas with us
+            Come build Dock with us
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-muted">
             Early access is open. The people using it now shape what ships next.

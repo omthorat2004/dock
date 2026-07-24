@@ -6,7 +6,7 @@ import { buttonStyles } from "@/components/ui/button";
 export const metadata: Metadata = {
   title: "Features",
   description:
-    "Syllabus-aware spaces, a grid canvas of topic cards, scoped chat tutoring, and a curated video shelf for every topic.",
+    "Syllabus-aware spaces, a grid of topic cards, scoped chat tutoring, and a curated video shelf for every topic.",
 };
 
 const sections = [
@@ -24,9 +24,9 @@ const sections = [
   },
   {
     id: "canvas",
-    eyebrow: "The canvas",
+    eyebrow: "Topic cards",
     title: "The lesson's topics as cards on a grid",
-    body: "Instead of a sidebar list, a space opens as a grid canvas. Every topic in the lesson is a card you can move and cluster. Pan and zoom to go from the whole lesson down to a single topic — the layout is yours and it persists.",
+    body: "Instead of a sidebar list, a space opens as a grid of cards. Every topic in the lesson is a card you can move and cluster. Zoom from the whole lesson down to a single topic — the layout is yours and it persists.",
     points: [
       "Cards laid out on a snapping grid background",
       "Drag to cluster by difficulty or by what is left",
@@ -53,7 +53,7 @@ const sections = [
     body: "Every card has a video tab with lectures and explainers matched to the topic. You watch inside the card and mark what helped, so the shelf gets sharper the more the space is used.",
     points: [
       "Videos matched per topic, not per lesson",
-      "Watch inline without leaving the canvas",
+      "Watch inline without leaving the card",
       "Mark a video as helpful to pin it to the card",
       "Falls back to a search you can refine yourself",
     ],
@@ -62,12 +62,12 @@ const sections = [
     id: "progress",
     eyebrow: "Progress",
     title: "See what you have not touched yet",
-    body: "The canvas doubles as a progress board. Untouched topics stay dim, revised ones light up. Before an exam you can see the gaps in one glance instead of guessing.",
+    body: "The same grid of cards doubles as a progress view. Untouched topics stay dim, revised ones light up. Before an exam you can see the gaps in one glance instead of guessing.",
     points: [
       "Per-topic revision state on the card",
       "Lesson-level completion across every topic",
       "Highlight everything untouched in one click",
-      "Sort the canvas by what is weakest",
+      "Sort your topics by what is weakest",
     ],
   },
 ];
@@ -146,7 +146,7 @@ export default function FeaturesPage() {
             Try it on the lesson you are behind on
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-muted">
-            Creating a space takes a minute. Bring one lesson and see the canvas
+            Creating a space takes a minute. Bring one lesson and watch the cards
             fill in.
           </p>
           <Link
