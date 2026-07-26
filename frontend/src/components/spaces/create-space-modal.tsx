@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { FormError } from "@/components/auth/form-error";
 import { SyllabusChip } from "@/components/spaces/syllabus-chip";
 import { buttonStyles } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
@@ -15,20 +16,39 @@ export type NewSpace = {
 type CreateSpaceModalProps = {
   open: boolean;
   onClose: () => void;
-  onCreate?: (space: NewSpace) => void;
+  onCreate: (space: NewSpace) => void;
+  /** True while the create request is in flight. */
+  submitting?: boolean;
+  /** A failed create, shown above the actions. */
+  error?: string;
 };
 
-export function CreateSpaceModal({ open, onClose, onCreate }: CreateSpaceModalProps) {
+/**
+ * Collects a lesson and the syllabus topics it covers.
+ *
+ * The modal owns no persistence and never closes itself: the caller mutates,
+ * then closes on success. Mounting it only while open is what resets the form.
+ */
+export function CreateSpaceModal({
+  open,
+  onClose,
+  onCreate,
+  submitting = false,
+  error,
+}: CreateSpaceModalProps) {
   const [lesson, setLesson] = useState("");
   const [topic, setTopic] = useState("");
   const [syllabus, setSyllabus] = useState<string[]>([]);
 
+  // Case-insensitive, so the same topic can't stack up under two spellings.
+  function alreadyAdded(value: string) {
+    return syllabus.some((item) => item.toLowerCase() === value.toLowerCase());
+  }
+
   function addTopic() {
     const next = topic.trim();
     if (!next) return;
-    // Ignore duplicates, case-insensitively, so the same topic can't stack up.
-    const exists = syllabus.some((item) => item.toLowerCase() === next.toLowerCase());
-    if (!exists) setSyllabus((prev) => [...prev, next]);
+    if (!alreadyAdded(next)) setSyllabus((prev) => [...prev, next]);
     setTopic("");
   }
 
@@ -44,20 +64,24 @@ export function CreateSpaceModal({ open, onClose, onCreate }: CreateSpaceModalPr
     setSyllabus((prev) => prev.filter((_, i) => i !== index));
   }
 
-  function reset() {
-    setLesson("");
-    setTopic("");
-    setSyllabus([]);
-  }
-
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitting) return;
+
     const name = lesson.trim();
-    if (!name) return;
-    onCreate?.({ lesson: name, syllabus });
-    reset();
-    onClose();
+    // A topic typed but never committed with Enter was still meant to count.
+    const pending = topic.trim();
+    const topics =
+      pending && !alreadyAdded(pending) ? [...syllabus, pending] : syllabus;
+
+    if (!name || topics.length === 0) return;
+    onCreate({ lesson: name, syllabus: topics });
   }
+
+  // The API requires a name and at least one topic; mirror that here so the
+  // button is honest about it rather than failing on submit.
+  const canSubmit =
+    lesson.trim().length > 0 && (syllabus.length > 0 || topic.trim().length > 0);
 
   return (
     <Modal open={open} onClose={onClose} title="Create a space">
@@ -100,7 +124,7 @@ export function CreateSpaceModal({ open, onClose, onCreate }: CreateSpaceModalPr
             </button>
           </div>
           <p className="text-xs text-muted">
-            Add each syllabus topic this lesson covers.
+            Add each syllabus topic this lesson covers. At least one is needed.
           </p>
 
           {syllabus.length > 0 ? (
@@ -114,16 +138,23 @@ export function CreateSpaceModal({ open, onClose, onCreate }: CreateSpaceModalPr
           ) : null}
         </div>
 
+        <FormError message={error} />
+
         <div className="flex justify-end gap-3 pt-1">
-          <button type="button" onClick={onClose} className={buttonStyles("secondary")}>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={submitting}
+            className={buttonStyles("secondary")}
+          >
             Cancel
           </button>
           <button
             type="submit"
-            disabled={!lesson.trim()}
+            disabled={!canSubmit || submitting}
             className={buttonStyles("primary")}
           >
-            Create space
+            {submitting ? "Creating…" : "Create space"}
           </button>
         </div>
       </form>

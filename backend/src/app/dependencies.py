@@ -12,6 +12,7 @@ from app.core.security import decode_access_token
 from app.db.mongo import get_db
 from app.models.user import User
 from app.services.auth_service import AuthService
+from app.services.space_service import SpaceService
 from app.services.user_service import UserService
 
 # auto_error=False so a missing header falls through to the cookie.
@@ -32,6 +33,13 @@ def get_user_service(db: DbDep) -> UserService:
 
 
 UserServiceDep = Annotated[UserService, Depends(get_user_service)]
+
+
+def get_space_service(db: DbDep) -> SpaceService:
+    return SpaceService(db)
+
+
+SpaceServiceDep = Annotated[SpaceService, Depends(get_space_service)]
 
 
 async def get_current_user(
