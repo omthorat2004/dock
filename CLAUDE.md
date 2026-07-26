@@ -49,7 +49,9 @@ types are stale: `npx next typegen`.
 
 Built: marketing site (`/`, `/features`, `/about`), auth (register, login, logout,
 refresh rotation), signed-in shells (`/dashboard`, `/spaces`), theming, error and
-loading boundaries.
+loading boundaries. Creating a space (`POST /spaces`) and listing them as cards
+(`GET /spaces`, summary only — lesson, topic count, timestamps).
 
-Next: creating a space (share a lesson + its syllabus section), topic extraction,
-the canvas with persisted card layout. Then per-topic chat and the video shelf.
+Next: the space's own page, topic extraction from the lesson, and the canvas with
+persisted card layout. Then per-topic chat — `TopicSession.start()` is where a
+session id gets minted — and the video shelf that fills `topic.youtube_links`.
