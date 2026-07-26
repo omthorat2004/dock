@@ -1,17 +1,20 @@
+import Link from "next/link";
 import { formatDate, formatRelativeTime } from "@/lib/relative-time";
 import type { SpaceSummary } from "@/lib/space-api";
+import { spaceHref } from "@/lib/space-url";
 
 /**
  * One space on the dashboard: the lesson, how many topics it holds, and when
- * it was last touched. Not a link yet — the space's own page is the next thing
- * being built, and a card that goes nowhere is worse than one that does not
- * pretend to.
+ * it was last touched. Opens its canvas at `/space/lesson-name-<id>`.
  */
 export function SpaceCard({ space }: { space: SpaceSummary }) {
   const topics = `${space.topic_count} ${space.topic_count === 1 ? "topic" : "topics"}`;
 
   return (
-    <article className="rounded-xl border border-border bg-surface p-6 transition-colors hover:border-muted/40">
+    <Link
+      href={spaceHref(space)}
+      className="block h-full rounded-xl border border-border bg-surface p-6 transition-colors hover:border-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+    >
       <h3 className="text-base font-semibold tracking-tight text-balance">
         {space.lesson_name}
       </h3>
@@ -33,6 +36,6 @@ export function SpaceCard({ space }: { space: SpaceSummary }) {
           </dd>
         </div>
       </dl>
-    </article>
+    </Link>
   );
 }

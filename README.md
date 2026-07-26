@@ -5,9 +5,12 @@ lesson and the syllabus section it covers, and the space lays the lesson's topic
 out as cards on a grid canvas. Clicking a card opens a tutor scoped to that topic,
 or the videos matched to it.
 
-This repo currently holds the **foundation**: the marketing site, accounts, and the
-Next.js + FastAPI base — plus per-user AI setup (bring a Gemini key, pick a model)
-and the create-a-space modal. Persisting spaces and the canvas come next.
+This repo currently holds the **foundation plus spaces**: the marketing site,
+accounts, per-user AI setup (bring a Gemini key, pick a model), and creating and
+listing spaces against the API. A space's canvas — the lesson in the middle, topic
+cards around it, videos and chat on each card — is built as UI and renders
+placeholder content; topic extraction, a persisted card layout and live chat come
+next.
 
 ## Stack
 
@@ -63,7 +66,8 @@ Backend tests run against a real `dock_test` database and drop it between tests.
 ```
 .claude/skills/     product-model, design-system, frontend-nextjs, backend-fastapi
 backend/src/app/    router/ → services/ → dao/ → mongo, plus ai/ (provider layer)
-frontend/src/       app/ (route groups), components/, hooks/, lib/ (incl. auth-store.ts)
+frontend/src/       app/ (route groups), components/ (spaces/ = the list,
+                    space/ = one space's canvas), hooks/, lib/
 ```
 
 ## Pages
@@ -74,8 +78,12 @@ frontend/src/       app/ (route groups), components/, hooks/, lib/ (incl. auth-s
 | `/features` | Spaces, canvas, learn mode, video shelf, progress |
 | `/about` | Why it exists, principles, roadmap |
 | `/login`, `/register` | Auth, split layout, behind `AuthProvider` |
-| `/dashboard`, `/spaces` | Signed-in shells, behind `ProtectedProvider` |
+| `/dashboard`, `/spaces` | Your spaces as cards, plus create — behind `ProtectedProvider` |
+| `/space/<lesson-name>-<id>` | One space's canvas: pan, zoom, topic cards, videos, learn mode |
 | `/api-key` | Configure your Gemini key + model (signed-in) |
+
+The space segment is `lesson-name-<id>`; the whole string is the route param and
+only the trailing id is load bearing (`lib/space-url.ts`).
 
 ## Conventions
 

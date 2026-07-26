@@ -24,6 +24,22 @@ Next.js does not proxy the API: there are no route handlers, and no server-side
 fetching of backend data. Auth lives in httpOnly cookies the backend sets, so the
 axios instance sends `withCredentials` and stores nothing itself.
 
+## Where things are
+
+| Path | What |
+| --- | --- |
+| `app/(app)/space/[id]/` | One space's canvas. The segment is `lesson-name-<id>` |
+| `components/space/` | The canvas, lesson node, topic card, learn panel |
+| `components/spaces/` | The space list, card and create-space modal |
+| `lib/space-url.ts` | `spaceHref` / `spaceSlug` / `spaceIdFromSlug` |
+| `lib/relative-time.ts` | `formatRelativeTime` ("3 days ago"), `formatDate` |
+| `lib/demo-space.ts` | Placeholder canvas content until topics are extracted |
+
+The canvas pans and zooms with **one CSS transform on one wrapper** — no library.
+Cards are passed to `SpaceCanvas` as `children`, so panning re-renders the canvas
+alone and React skips the cards entirely. See the `frontend-nextjs` skill before
+changing it.
+
 ## Checks
 
 ```bash

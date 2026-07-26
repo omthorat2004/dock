@@ -13,7 +13,8 @@ to Stripe, Linear or Notion than to a crypto landing page.
 
 Never use, anywhere in the product:
 
-- Neon or saturated accents (violet `#7c5cff`, cyan `#22d3ee`, lime, magenta).
+- Neon or fluorescent accents (`#7c5cff`, cyan `#22d3ee`, lime, magenta). The
+  brand accent is a *deep* violet; the ban is on the glowing ones next to it.
 - Gradient text, glowing blur "blobs", or coloured drop shadows.
 - More than **one** accent hue on a screen.
 - Dark-by-default marketing pages. Light is the default; dark mode is a mirror.
@@ -32,9 +33,11 @@ Light is the source of truth; every token has a dark counterpart. Defined once i
 | `border` | `#e4e7ec` | `#252a32` | 1px hairlines |
 | `foreground` | `#101828` | `#f2f4f7` | Body and headings |
 | `muted` | `#5b6472` | `#98a2b3` | Secondary text — must hold 4.5:1 |
-| `accent` | `#1a56db` | `#4c82f7` | One brand blue: links, primary fill, focus |
-| `accent-subtle` | `#eff4ff` | `#16233d` | Accent-tinted backgrounds only |
+| `accent` | `#6538c9` | `#b39bf5` | One brand violet: links, primary fill, focus |
+| `accent-hover` | `#542eaa` | `#c6b4f8` | The hover state of a primary fill, nothing else |
+| `accent-subtle` | `#f4f0ff` | `#241a3d` | Accent-tinted backgrounds only |
 | `success` / `danger` | `#067647` / `#b42318` | `#3ccb7f` / `#f97066` | State only, never decoration |
+| `danger-subtle` | `#fef3f2` | `#2a1512` | The fill behind an error message |
 
 Rules:
 
@@ -94,6 +97,10 @@ into the panel. No animation, no portal.
 `rounded-full border border-border bg-subtle`, each with a cross button carrying
 `aria-label="Remove {label}"`.
 
+**Space card** (the list) — a whole-card `<Link>`, `rounded-xl border p-6`,
+lesson name, topic count, then `Updated 3 days ago` / `Created 26 Jul 2026` in
+`text-xs text-muted`. Relative times come from `formatRelativeTime()`.
+
 ## The canvas grid
 
 The grid is Dock's one signature element. Keep it quiet.
@@ -104,6 +111,22 @@ The grid is Dock's one signature element. Keep it quiet.
   edges instead of ending in a hard line.
 - The grid is background texture only: never place it behind body copy at full
   strength, and never tint it with the accent.
+
+### A space's canvas
+
+- The **lesson** sits at the centre in the one accent-tinted panel on the surface
+  (`border-accent/30 bg-accent-subtle`). Everything around it stays neutral —
+  that single tint is the accent budget for the screen.
+- **Topic cards** are `w-[272px]`, neutral, `shadow-sm`, with a mono syllabus ref,
+  the title, a progress bar, and two actions: *Videos* (secondary, expands the
+  shelf in place) and *Chat* (primary, opens learn mode).
+- Progress bars are **neutral** (`bg-foreground/60` on `bg-border`), never accent
+  — six accented bars would drown the one thing the accent is for. Always pair the
+  bar with its `role="progressbar"` and a text label ("60% revised").
+- **Learn mode is a panel, not a modal**: a right-hand `<aside>` with a left
+  hairline, so the topic stays visible while you read. Escape closes it.
+- Zoom is instant — no transition. A card in motion is the only place `shadow-md`
+  is allowed.
 
 ## Accessibility
 

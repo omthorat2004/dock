@@ -26,6 +26,11 @@ syllabus section, with the lesson's topics laid out as cards on a grid canvas.
 - **Spaces are lesson-scoped**, never subject- or course-scoped.
 - Layering is `router → service → dao` on the backend, and
   `component → hook → *-api.ts → axios` on the frontend. Skipping a layer is a bug.
+- A space's URL is `/space/<lesson-name>-<id>`. Build and parse it with
+  `lib/space-url.ts`; never hand-concatenate the segment.
+- The canvas pans and zooms with **one CSS transform on one wrapper**, and the
+  cards reach it as `children` so a pan never re-renders them. No canvas element,
+  no graph library.
 
 ## Commands
 
@@ -50,8 +55,11 @@ types are stale: `npx next typegen`.
 Built: marketing site (`/`, `/features`, `/about`), auth (register, login, logout,
 refresh rotation), signed-in shells (`/dashboard`, `/spaces`), theming, error and
 loading boundaries. Creating a space (`POST /spaces`) and listing them as cards
-(`GET /spaces`, summary only — lesson, topic count, timestamps).
+(`GET /spaces`, summary only — lesson, topic count, timestamps). The space canvas
+at `/space/<lesson-name>-<id>` — pan, zoom, the lesson centred with topic cards
+around it, a video shelf per card and learn mode in a side panel.
 
-Next: the space's own page, topic extraction from the lesson, and the canvas with
-persisted card layout. Then per-topic chat — `TopicSession.start()` is where a
-session id gets minted — and the video shelf that fills `topic.youtube_links`.
+Next: replace the canvas's placeholder content (`lib/demo-space.ts`) with the real
+space — topic extraction from the lesson, then a persisted card layout. Then
+per-topic chat, where `TopicSession.start()` mints the session id, and the video
+shelf that fills `topic.youtube_links`.

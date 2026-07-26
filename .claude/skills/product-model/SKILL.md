@@ -66,15 +66,20 @@ If a request seems to need one of these, raise it before building it.
 
 ## Build order
 
-1. **Foundation (current)** — marketing site (landing, features, about), auth
+1. **Foundation** — done. Marketing site (landing, features, about), auth
    (register, login, session), Next.js + FastAPI base.
-2. **Spaces and canvas** — create a space for a lesson, share it with its syllabus
-   section, get topic cards on the grid, persist their layout.
+2. **Spaces and canvas (current)** — a space can be created for a lesson with the
+   topics it covers, and listed as cards. The canvas itself is built as UI at
+   `/space/<lesson-name>-<id>`, but it renders placeholder content: topic
+   extraction from the lesson and a persisted card layout are still to come.
 3. **Learn mode and videos** — per-topic chat grounded in the shared lesson, and
-   the per-topic video shelf.
+   the per-topic video shelf. The shape is in the data (`TopicSession`,
+   `youtube_links`) and previewed in the UI; neither is wired to a model yet.
 
 Anything on the marketing pages describing stage 2 or 3 is a promise, not a claim
 about what ships today. `/about` states the roadmap honestly — keep it that way.
+The same rule holds inside the product: the canvas preview says it is a preview,
+and the learn-mode composer is disabled rather than pretending to send.
 
 ## Copy voice
 
