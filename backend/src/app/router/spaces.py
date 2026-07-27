@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status
 
 from app.dependencies import CurrentUser, SpaceServiceDep
-from app.schemas.space import CreateSpaceRequest, SpaceSummary
+from app.schemas.space import CreateSpaceRequest, SpaceDetail, SpaceSummary
 
 router = APIRouter(prefix="/spaces", tags=["spaces"])
 
@@ -36,3 +36,21 @@ async def list_spaces(
     user: CurrentUser, service: SpaceServiceDep
 ) -> list[SpaceSummary]:
     return await service.list_spaces(user.id)
+
+
+@router.get(
+    "/{space_id}",
+    response_model=SpaceDetail,
+    status_code=status.HTTP_200_OK,
+    summary="One space in full, with its topics",
+    description=(
+        "What opening a space's canvas loads: the lesson and every topic on it, "
+        "each with its video shelf and chat state. A space belonging to someone "
+        "else is a 404, the same as one that does not exist."
+    ),
+)
+async def get_space(
+    space_id: str, user: CurrentUser, service: SpaceServiceDep
+) -> SpaceDetail:
+    space = await service.get_space(user.id, space_id)
+    return SpaceDetail.model_validate(space, from_attributes=True)

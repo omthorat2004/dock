@@ -63,3 +63,52 @@ class SpaceSummary(BaseModel):
     topic_count: int
     created_at: datetime
     updated_at: datetime
+
+
+class YoutubeLinkRead(BaseModel):
+    """One video on a topic's shelf. Every one of these has been verified."""
+
+    video_id: str
+    title: str
+    url: str
+
+
+class TopicSessionRead(BaseModel):
+    """A topic's chat state, without the timestamps the canvas has no use for.
+
+    `session_id` is None until the student first chats, and `limit_reached`
+    says the conversation has outgrown the model's input budget — which is what
+    lets the card show a closed composer without having to send a message to
+    discover it.
+    """
+
+    session_id: str | None
+    limit_reached: bool
+
+
+class TopicRead(BaseModel):
+    """A topic as a card on the canvas.
+
+    `video_limit_reached` is computed from the shelf rather than counted by the
+    client, so the rule about how full is full lives on the server only.
+    """
+
+    id: str
+    topic_name: str
+    youtube_links: list[YoutubeLinkRead]
+    video_limit_reached: bool
+    session: TopicSessionRead
+
+
+class SpaceDetail(BaseModel):
+    """One space in full — what opening its canvas loads.
+
+    The counterpart to `SpaceSummary`: the list deliberately withholds the
+    topics, and this is the endpoint that has them.
+    """
+
+    id: str
+    lesson_name: str
+    topics: list[TopicRead]
+    created_at: datetime
+    updated_at: datetime

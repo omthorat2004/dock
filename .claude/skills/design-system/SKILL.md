@@ -117,14 +117,27 @@ The grid is Dock's one signature element. Keep it quiet.
 - The **lesson** sits at the centre in the one accent-tinted panel on the surface
   (`border-accent/30 bg-accent-subtle`). Everything around it stays neutral —
   that single tint is the accent budget for the screen.
-- **Topic cards** are `w-[272px]`, neutral, `shadow-sm`, with a mono syllabus ref,
-  the title, a progress bar, and two actions: *Videos* (secondary, expands the
-  shelf in place) and *Chat* (primary, opens learn mode).
+- **Topic cards** are `w-[272px]`, neutral, `shadow-sm`, with a mono topic index,
+  the title, a progress bar, and two actions: *Videos* (secondary) and *Chat*
+  (primary). Both open a **panel** — a card is too small to watch a video or
+  hold a conversation in, and nothing expands in place.
+- A card that has hit a limit says so on the card, as a neutral pill
+  (`rounded-full border border-border bg-subtle`, `text-[10px] text-muted`):
+  "All 20 videos", "Context limit reached". Never `danger` — nothing has gone
+  wrong, the topic has simply had everything Dock can give it.
 - Progress bars are **neutral** (`bg-foreground/60` on `bg-border`), never accent
   — six accented bars would drown the one thing the accent is for. Always pair the
   bar with its `role="progressbar"` and a text label ("60% revised").
 - **Learn mode is a panel, not a modal**: a right-hand `<aside>` with a left
   hairline, so the topic stays visible while you read. Escape closes it.
+- **Videos use that same panel**, and only one is open at a time — opening one
+  closes the other. It leads with a 16:9 embedded player, then the shelf as a
+  selectable list, then the *Find 5 more* action and the count. Watching happens
+  in Dock; "Open on YouTube" is a secondary link, not the primary path.
+- **Model output is rendered as markdown** (`components/markdown.tsx`), never
+  printed raw — a reply arrives full of `**` and `-` whether or not it was asked
+  for. The student's own messages stay verbatim. Code blocks and tables scroll
+  inside themselves; the panel never scrolls sideways.
 - Zoom is instant — no transition. A card in motion is the only place `shadow-md`
   is allowed.
 

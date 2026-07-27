@@ -32,6 +32,17 @@ async def connect() -> None:
     await db.refresh_tokens.create_index("user_id")
     await db.refresh_tokens.create_index("expires_at", expireAfterSeconds=0)
 
+    # Every transcript read is "this session, in order", and the `_id` tail is
+    # what keeps the two messages of one turn from sorting arbitrarily.
+    await db.chat_messages.create_index(
+        [("session_id", 1), ("created_at", 1), ("_id", 1)]
+    )
+
+    # One summary per session, enforced rather than assumed: the rolling
+    # rewrite upserts on this key, so a duplicate here would mean two summaries
+    # racing to be the latest.
+    await db.chat_summaries.create_index("session_id", unique=True)
+
 
 async def disconnect() -> None:
     global _client

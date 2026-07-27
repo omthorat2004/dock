@@ -180,8 +180,13 @@ reaching for one:
   `onWheel` as passive, and a passive listener cannot `preventDefault`, so
   ctrl+scroll would zoom the browser instead of the canvas.
 - A drag starting inside `[data-canvas-card]` is ignored, so card buttons work.
-- Only what is open is mounted: the video shelf renders for the expanded card,
-  learn-mode chat for the selected topic. Do not give every card its own chat.
+- Only what is open is mounted. One panel slot beside the canvas holds either
+  learn mode or the video shelf for one topic — `SpaceDetail` tracks it as a
+  single `{ topicId, mode }`, so opening one closes the other. Do not give every
+  card its own chat, its own transcript query, or its own player.
+- The open topic is looked up in the freshly fetched space each render, not
+  copied into state on open: a chat or a generate writes to the space in the
+  cache, and a captured copy would go stale the moment either happened.
 
 ## Conventions
 

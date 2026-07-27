@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ApiError } from "@/lib/axios.config";
 import {
   type CreateSpacePayload,
+  type SpaceDetail,
   type SpaceSummary,
   spacesApi,
 } from "@/lib/space-api";
@@ -11,7 +12,20 @@ import {
 export const spaceKeys = {
   all: ["spaces"] as const,
   list: ["spaces", "list"] as const,
+  detail: (spaceId: string) => ["spaces", "detail", spaceId] as const,
 };
+
+/**
+ * One space in full — the canvas's own load, with every topic's video shelf
+ * and chat state. Separate from the list query on purpose: the list is
+ * summaries and must not be invalidated by a chat or a video generation.
+ */
+export function useSpace(spaceId: string) {
+  return useQuery<SpaceDetail, ApiError>({
+    queryKey: spaceKeys.detail(spaceId),
+    queryFn: () => spacesApi.get(spaceId),
+  });
+}
 
 /** Every space the signed-in user owns, newest activity first. */
 export function useSpaces() {

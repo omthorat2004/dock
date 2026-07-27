@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { SpaceDetail } from "@/components/space/space-detail";
-import { DEMO_SPACE } from "@/lib/demo-space";
+import { spaceIdFromSlug } from "@/lib/space-url";
 
 export const metadata: Metadata = {
   title: "Space",
@@ -10,9 +10,8 @@ export const metadata: Metadata = {
  * A space's canvas.
  *
  * The `id` segment is `lesson-name-<id>`; `spaceIdFromSlug` pulls the id back
- * out of it. Nothing is fetched yet — the canvas renders `DEMO_SPACE` so the
- * UI can be built and looked at ahead of the API. Swapping in the real space
- * is this component's job alone; nothing below it changes.
+ * out of it. The space itself is fetched in `SpaceDetail` — the browser calls
+ * FastAPI directly, so there is nothing to load here.
  */
 export default async function SpacePage({
   params,
@@ -20,7 +19,7 @@ export default async function SpacePage({
   params: Promise<{ id: string }>;
 }) {
   // Awaited because request APIs and params are async-only in Next 16.
-  await params;
+  const { id } = await params;
 
-  return <SpaceDetail space={DEMO_SPACE} />;
+  return <SpaceDetail spaceId={spaceIdFromSlug(id)} />;
 }

@@ -7,11 +7,9 @@
  */
 export function LessonNode({
   lessonName,
-  syllabusSection,
   topicCount,
 }: {
   lessonName: string;
-  syllabusSection: string;
   topicCount: number;
 }) {
   return (
@@ -23,7 +21,6 @@ export function LessonNode({
       <h2 className="mt-2 text-2xl font-semibold tracking-tight text-balance">
         {lessonName}
       </h2>
-      <p className="mt-2 text-sm text-muted">{syllabusSection}</p>
       <p className="mt-4 border-t border-accent/20 pt-3 text-xs text-muted">
         {topicCount} topics to revise
       </p>

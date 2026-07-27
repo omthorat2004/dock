@@ -31,6 +31,12 @@ syllabus section, with the lesson's topics laid out as cards on a grid canvas.
 - The canvas pans and zooms with **one CSS transform on one wrapper**, and the
   cards reach it as `children` so a pan never re-renders them. No canvas element,
   no graph library.
+- **A YouTube link is never stored on the model's word.** Every candidate is
+  verified through `core/youtube.py` first; unverified links do not reach Mongo.
+- The 20/5/10 limits live in `models/space.py` and `models/chat.py`, mirrored for
+  the UI only in `frontend/src/lib/constants.ts`. The server is the authority —
+  the client copies exist so a card can retire its own button, not so it can
+  decide.
 
 ## Commands
 
@@ -57,9 +63,25 @@ refresh rotation), signed-in shells (`/dashboard`, `/spaces`), theming, error an
 loading boundaries. Creating a space (`POST /spaces`) and listing them as cards
 (`GET /spaces`, summary only — lesson, topic count, timestamps). The space canvas
 at `/space/<lesson-name>-<id>` — pan, zoom, the lesson centred with topic cards
-around it, a video shelf per card and learn mode in a side panel.
+around it — now loads the real space from `GET /spaces/{id}`; the demo fixture
+is gone.
 
-Next: replace the canvas's placeholder content (`lib/demo-space.ts`) with the real
-space — topic extraction from the lesson, then a persisted card layout. Then
-per-topic chat, where `TopicSession.start()` mints the session id, and the video
-shelf that fills `topic.youtube_links`.
+Learn mode and the video shelf are live, both on the user's own key via
+`AIProviderDep`:
+
+- **Chat** — `POST /spaces/{id}/topics/{topic_id}/chat`. Each prompt carries one
+  rolling summary plus the last `RECENT_MESSAGE_WINDOW` (10) messages, so the
+  conversation stays bounded. Overflow past the window is folded into the
+  session's single summary, which is *replaced*, never appended to. A provider
+  token-limit error sets `TopicSession.limit_reached`, and later sends are
+  refused with 413 before the model is called.
+- **Videos** — `POST /spaces/{id}/topics/{topic_id}/videos`. Five per request,
+  `MAX_YOUTUBE_LINKS` (20) in total. The model only *suggests*; every candidate
+  is resolved against YouTube's oEmbed endpoint and the dead ones are dropped,
+  so an empty result is a normal success. The stored title is YouTube's own.
+  Videos open in the **same panel slot as learn mode**, with an embedded player.
+
+Next: topic extraction from the lesson text (topics are still typed in by hand at
+create time), a persisted card layout to replace the derived ring in
+`lib/topic-layout.ts`, and real revision progress — the topic card's bar is
+honestly hard-wired to "Not started" until something feeds it.

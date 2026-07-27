@@ -32,7 +32,7 @@ const onStorage = (e: StorageEvent) => {
   return () => {
     listeners.delete(onChange);
     media.removeEventListener("change", onChange);
-    window.removeEventListener("storage", onChange);
+    window.removeEventListener("storage", onStorage);
   };
 }
 

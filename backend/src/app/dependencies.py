@@ -12,8 +12,10 @@ from app.core.security import decode_access_token
 from app.db.mongo import get_db
 from app.models.user import User
 from app.services.auth_service import AuthService
+from app.services.chat_service import ChatService
 from app.services.space_service import SpaceService
 from app.services.user_service import UserService
+from app.services.video_service import VideoService
 
 # auto_error=False so a missing header falls through to the cookie.
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -40,6 +42,20 @@ def get_space_service(db: DbDep) -> SpaceService:
 
 
 SpaceServiceDep = Annotated[SpaceService, Depends(get_space_service)]
+
+
+def get_chat_service(db: DbDep) -> ChatService:
+    return ChatService(db)
+
+
+ChatServiceDep = Annotated[ChatService, Depends(get_chat_service)]
+
+
+def get_video_service(db: DbDep) -> VideoService:
+    return VideoService(db)
+
+
+VideoServiceDep = Annotated[VideoService, Depends(get_video_service)]
 
 
 async def get_current_user(

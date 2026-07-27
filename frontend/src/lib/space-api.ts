@@ -12,6 +12,41 @@ export type SpaceSummary = {
   updated_at: string;
 };
 
+/** One video on a topic's shelf. Every one of these resolved to a real video. */
+export type YoutubeLink = {
+  video_id: string;
+  title: string;
+  url: string;
+};
+
+/**
+ * A topic's chat state. `session_id` is null until the student first chats;
+ * `limit_reached` says the conversation has outgrown the model's input budget,
+ * which is what closes the composer without having to send to find out.
+ */
+export type TopicSession = {
+  session_id: string | null;
+  limit_reached: boolean;
+};
+
+export type Topic = {
+  id: string;
+  topic_name: string;
+  youtube_links: YoutubeLink[];
+  /** Computed by the server — the client never counts the shelf itself. */
+  video_limit_reached: boolean;
+  session: TopicSession;
+};
+
+/** One space in full: what opening its canvas loads. */
+export type SpaceDetail = {
+  id: string;
+  lesson_name: string;
+  topics: Topic[];
+  created_at: string;
+  updated_at: string;
+};
+
 export type CreateSpacePayload = {
   lesson_name: string;
   /** Topic names only. Videos and the chat session are server-owned. */
@@ -27,6 +62,11 @@ export const spacesApi = {
 
   async list(): Promise<SpaceSummary[]> {
     const { data } = await api.get<SpaceSummary[]>("/spaces");
+    return data;
+  },
+
+  async get(spaceId: string): Promise<SpaceDetail> {
+    const { data } = await api.get<SpaceDetail>(`/spaces/${spaceId}`);
     return data;
   },
 };

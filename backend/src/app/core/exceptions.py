@@ -73,10 +73,45 @@ class InvalidCredentials(AuthenticationError):
 class ApiKeyNotConfigured(AuthenticationError):
     # 401 on purpose: the caller is authenticated to Dock but has not yet given
     # us the third-party key the request needs, so it cannot proceed.
+    #
+    # Its own `code`, not the inherited `authentication_error`, because the two
+    # 401s mean opposite things to a client: one says the session is over and
+    # the user should be sent to /login, this one says the session is fine and
+    # they need to visit /api-key. Without the distinction the frontend's
+    # refresh-on-401 interceptor treats a missing key as an expired session.
     status_code = 401
+    code = "api_key_not_configured"
     message = "Add your AI provider API key before using the model."
 
 
 class UnsupportedProvider(ValidationError):
     status_code = 422
     message = "That model provider is not supported."
+
+
+class ContextLimitReached(AppError):
+    """This topic's conversation no longer fits in the model's input budget.
+
+    Raised in two places, and it has to be both: `ChatService` raises it *after*
+    a provider rejected the prompt for size (having recorded that on the
+    session), and again on every later send, up front, so a session known to be
+    over the limit never pays for another provider call to be told the same
+    thing.
+
+    The code matches `provider_errors.TOKEN_LIMIT_CODE` deliberately — the
+    frontend must not have to tell "the provider just said so" apart from "we
+    already knew".
+    """
+
+    status_code = 413
+    code = "token_limit_reached"
+    message = (
+        "Token limit reached for this session. Start a new session to continue."
+    )
+
+
+class VideoLimitReached(ConflictError):
+    """The topic's video shelf is full — see `MAX_YOUTUBE_LINKS`."""
+
+    code = "youtube_limit_reached"
+    message = "This topic already holds every video it can."

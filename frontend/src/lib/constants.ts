@@ -1,0 +1,30 @@
+/**
+ * Product limits and the API error codes the UI branches on.
+ *
+ * The limits are mirrors of the server's, which is the authority — the backend
+ * declares them in `models/space.py` and `models/chat.py` and enforces them on
+ * every request. They exist here so a card can retire its own button and say
+ * why *before* a call it knows will be refused, not so the client can decide.
+ */
+
+/** The whole video shelf for one topic. Mirrors `MAX_YOUTUBE_LINKS`. */
+export const MAX_YOUTUBE_LINKS = 20;
+
+/** How many videos one "find more" press adds. Mirrors `YOUTUBE_LINKS_PER_REQUEST`. */
+export const YOUTUBE_LINKS_PER_REQUEST = 5;
+
+/** How many messages travel verbatim with each prompt. Mirrors `RECENT_MESSAGE_WINDOW`. */
+export const RECENT_MESSAGE_WINDOW = 10;
+
+/**
+ * Error codes from the API. Both 401s below mean opposite things: one is a
+ * dead session, the other a signed-in user who has not set up a model yet.
+ */
+export const ERROR_CODES = {
+  /** 401 — signed in, but no provider key. Send them to /api-key, not /login. */
+  apiKeyNotConfigured: "api_key_not_configured",
+  /** 413 — this topic's conversation no longer fits the model's input budget. */
+  tokenLimitReached: "token_limit_reached",
+  /** 409 — the topic's video shelf is full. */
+  youtubeLimitReached: "youtube_limit_reached",
+} as const;

@@ -3,6 +3,7 @@ import axios, {
   type AxiosInstance,
   type InternalAxiosRequestConfig,
 } from "axios";
+import { ERROR_CODES } from "@/lib/constants";
 
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
@@ -91,10 +92,21 @@ api.interceptors.response.use(
 
     const isAuthCall = AUTH_PATHS.some((path) => config?.url?.includes(path));
 
+    // Not every 401 is an expired session. A route that needs the user's own
+    // provider key answers 401 when they have not set one — the session is
+    // perfectly good, so refreshing it would rotate the tokens to learn
+    // nothing and still fail.
+    const isMissingApiKey =
+      error.response?.data?.code === ERROR_CODES.apiKeyNotConfigured;
+
     // Refresh only when: the call needs auth and got a 401, it is not itself an
     // auth call, and it has not already been retried once.
     const shouldRefresh =
-      status === 401 && config !== undefined && !isAuthCall && !config._retry;
+      status === 401 &&
+      config !== undefined &&
+      !isAuthCall &&
+      !isMissingApiKey &&
+      !config._retry;
 
     if (shouldRefresh) {
       config._retry = true;

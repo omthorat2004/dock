@@ -8,6 +8,30 @@ from app.models.user import utcnow
 
 COLLECTION = "spaces"
 
+#: The whole video shelf for one topic, not a page size. Once a topic holds this
+#: many links the shelf is closed: the API refuses to generate more and the card
+#: says so rather than offering a button that cannot work.
+MAX_YOUTUBE_LINKS = 20
+
+#: How many links one "find videos" request asks for. The shelf fills five at a
+#: time so the first open is quick and a student only pulls more if the first
+#: five missed.
+YOUTUBE_LINKS_PER_REQUEST = 5
+
+
+class YoutubeLink(BaseModel):
+    """One explainer on a topic's video shelf.
+
+    `title` is the one YouTube itself returned when the link was verified — not
+    the one the model guessed — so a shelf never labels a video with someone
+    else's title. `video_id` is what dedupes the shelf: the same video reached
+    through `youtu.be`, `/shorts` and `watch?v=` is one video, not three.
+    """
+
+    video_id: str
+    title: str
+    url: str
+
 
 class TopicSession(BaseModel):
     """The learn-mode chat session attached to a single topic.
@@ -33,12 +57,28 @@ class TopicSession(BaseModel):
 
 
 class Topic(BaseModel):
-    """One thing to learn within the lesson — a card on the space's canvas."""
+    """One thing to learn within the lesson — a card on the space's canvas.
 
+    The id is minted by the app rather than left to Mongo, because a topic is
+    nested inside its space and so never gets an `_id` of its own. It is what
+    the chat and video routes address a single card by.
+    """
+
+    id: str = Field(default_factory=lambda: str(uuid4()))
     topic_name: str
-    #: YouTube explainers matched to this topic. Filled in server-side later.
-    youtube_links: list[str] = Field(default_factory=list)
+    #: YouTube explainers matched to this topic, capped at MAX_YOUTUBE_LINKS.
+    youtube_links: list[YoutubeLink] = Field(default_factory=list)
     session: TopicSession = Field(default_factory=TopicSession)
+
+    @property
+    def video_limit_reached(self) -> bool:
+        """True once the shelf is full and no further links can be generated."""
+        return len(self.youtube_links) >= MAX_YOUTUBE_LINKS
+
+    @property
+    def remaining_video_slots(self) -> int:
+        """How many links this topic can still take, never below zero."""
+        return max(0, MAX_YOUTUBE_LINKS - len(self.youtube_links))
 
 
 class Space(BaseModel):
@@ -67,6 +107,10 @@ class Space(BaseModel):
     def topic_count(self) -> int:
         """How many topics the space holds — what a space card shows."""
         return len(self.topics)
+
+    def topic_by_id(self, topic_id: str) -> Topic | None:
+        """The topic a chat or video request is addressing, if it exists."""
+        return next((topic for topic in self.topics if topic.id == topic_id), None)
 
     @classmethod
     def from_document(cls, document: dict[str, Any]) -> "Space":
