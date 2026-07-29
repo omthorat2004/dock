@@ -32,6 +32,12 @@ class Settings(BaseSettings):
         default=["http://localhost:3000", "http://127.0.0.1:3000"]
     )
 
+    # The YouTube Data API key Dock searches with. Server-owned, not the
+    # student's — unlike the AI provider key, this one is Dock's own quota. When
+    # it is unset the video shelf answers 503 `youtube_unavailable` rather than
+    # falling back to letting the model invent video ids.
+    youtube_api_key: str | None = None
+
     # Auth cookies. In development the frontend is on localhost:3000 and the API
     # on localhost:8000 — different origins, but the same site, so `lax` works
     # and `secure` can stay off over plain http.

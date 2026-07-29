@@ -115,3 +115,29 @@ class VideoLimitReached(ConflictError):
 
     code = "youtube_limit_reached"
     message = "This topic already holds every video it can."
+
+
+class YoutubeUnavailable(AppError):
+    """YouTube search cannot be reached — no key configured, or it is down.
+
+    Distinct from `VideoLimitReached`: nothing is wrong with the topic, the
+    search itself is unavailable, so the honest answer is "not right now" and
+    the student should try again later rather than change anything.
+    """
+
+    status_code = 503
+    code = "youtube_unavailable"
+    message = "YouTube fetch is not available at this time. Please try again later."
+
+
+class YoutubeRateLimited(AppError):
+    """YouTube refused the search for quota or rate reasons.
+
+    Its own code rather than `provider_rate_limited`: that one means the
+    student's *own* AI key is being throttled and is theirs to fix, while this
+    is Dock's shared YouTube quota and only waiting helps.
+    """
+
+    status_code = 429
+    code = "youtube_rate_limited"
+    message = "YouTube search has hit its request limit. Please try again in a while."

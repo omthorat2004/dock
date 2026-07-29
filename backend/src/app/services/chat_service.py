@@ -9,6 +9,7 @@ exists.
 
 import logging
 
+from fastapi import BackgroundTasks
 from pymongo.asynchronous.database import AsyncDatabase
 
 from app.ai.base import AIProvider
@@ -96,12 +97,18 @@ class ChatService:
         topic_id: str,
         provider: AIProvider,
         message: str,
+        background: BackgroundTasks,
     ) -> ChatMessage:
-        """One turn: prompt the model, store both sides, roll the summary.
+        """One turn: prompt the model, store both sides, queue the summary.
 
         A session whose limit has already been reached is refused here, before
         the provider is called — the answer cannot change, so paying for it
         again would only turn a fast 413 into a slow one.
+
+        `background` is taken rather than reached for because rolling the
+        summary is a *second* model call, and the student's reply is finished
+        without it: waiting for it would roughly double how long a send appears
+        to take, for work whose result is not read until some later turn.
         """
         space, topic = await self.spaces.get_topic(user_id, space_id, topic_id)
 
@@ -147,7 +154,11 @@ class ChatService:
         topic.session.updated_at = now
         await self.spaces.save_topics(space)
 
-        await self._roll_summary(provider, session_id, summary)
+        # Queued, not awaited: it runs once this reply is on its way to the
+        # student. Nothing in the next request depends on it having finished —
+        # `_roll_summary` reads the message count each time, so a turn it
+        # missed is simply folded in by the following one.
+        background.add_task(self._roll_summary, provider, session_id, summary)
         return reply
 
     async def get_history(
@@ -181,9 +192,10 @@ class ChatService:
         of the current window are re-read, so this stays one small prompt however
         long the conversation gets — never a re-summary of the whole transcript.
 
-        Failing here is not allowed to fail the student's message: the reply is
-        already theirs. The window simply stays wider until the next turn
-        succeeds, which is why `message_count` is stored rather than assumed.
+        Runs after the response, so failing here cannot fail the student's
+        message — by then the reply is already theirs. The window simply stays
+        wider until a later turn succeeds, which is why `message_count` is
+        stored rather than assumed.
         """
         total = await self.messages.count(session_id)
         cutoff = total - RECENT_MESSAGE_WINDOW

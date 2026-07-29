@@ -1,4 +1,4 @@
-from fastapi import APIRouter, status
+from fastapi import APIRouter, BackgroundTasks, status
 
 from app.dependencies import AIProviderDep, ChatServiceDep, CurrentUser
 from app.schemas.chat import ChatHistory, ChatMessageRead, ChatReply, SendMessageRequest
@@ -28,9 +28,12 @@ async def send_message(
     # re-checks the key.
     provider: AIProviderDep,
     service: ChatServiceDep,
+    # Rolling the session's summary is queued onto this and runs after the
+    # reply has been sent — see `ChatService.send_message`.
+    background: BackgroundTasks,
 ) -> ChatReply:
     reply = await service.send_message(
-        user.id, space_id, topic_id, provider, payload.message
+        user.id, space_id, topic_id, provider, payload.message, background
     )
     return ChatReply(
         session_id=reply.session_id,

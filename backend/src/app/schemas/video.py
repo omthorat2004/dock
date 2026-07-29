@@ -8,7 +8,7 @@ class GenerateVideosResponse(BaseModel):
 
     Both lists are sent because the client needs both answers: `links` is the
     shelf to render, and `added` is how many are new — which can be zero when
-    every candidate the model gave failed verification.
+    every search came back with videos the student already has.
     """
 
     added: list[YoutubeLinkRead]

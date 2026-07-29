@@ -13,10 +13,13 @@ router = APIRouter(prefix="/spaces/{space_id}/topics/{topic_id}", tags=["videos"
     status_code=status.HTTP_201_CREATED,
     summary="Find the next few videos for a topic",
     description=(
-        "Asks the caller's model for explainers, discards the ones that do not "
-        "resolve to a real video, and appends what survives — up to five per "
-        "call and twenty in total. Returns 409 `youtube_limit_reached` once the "
-        "shelf is full. Adding nothing is a normal result, not an error."
+        "The caller's model searches YouTube through a tool and picks from what "
+        "comes back — a mix of Indian and international explainers, up to five "
+        "per call and twenty in total. Every link is a real search result, so "
+        "none of them are dead. Returns 409 `youtube_limit_reached` once the "
+        "shelf is full, 429 `youtube_rate_limited` when YouTube's quota is "
+        "spent, and 503 `youtube_unavailable` when search cannot be reached at "
+        "all. Adding nothing is a normal result, not an error."
     ),
 )
 async def generate_videos(

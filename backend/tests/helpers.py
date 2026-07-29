@@ -10,7 +10,7 @@ from typing import Any
 from google.genai import errors as genai_errors
 from pymongo import MongoClient
 
-from app.ai.base import AIProvider
+from app.ai.base import AIProvider, ToolHandler, ToolSpec
 from app.core.config import settings
 from app.dependencies import get_ai_provider
 from app.main import app
@@ -23,25 +23,59 @@ LESSON = {
 }
 
 
+#: What a scripted provider searches for when a test does not say. Two calls,
+#: one per audience, which is what the video prompt asks a real model to do.
+DEFAULT_SEARCHES = [("topic for india", "india"), ("topic worldwide", "global")]
+
+
 class FakeProvider(AIProvider):
     """A provider that answers from a script and records what it was asked.
 
     `replies` may hold exceptions as well as strings — raising one is how a
     test reproduces a provider failure without a vendor SDK object.
+
+    `searches` is the tool-call half: the (query, audience) pairs this provider
+    will put through `search_youtube` before answering. Passing `[]` models the
+    unhelpful case — a model that replies without ever searching.
     """
 
-    def __init__(self, replies: list[Any] | None = None) -> None:
+    def __init__(
+        self,
+        replies: list[Any] | None = None,
+        searches: list[tuple[str, str]] | None = None,
+    ) -> None:
         self.replies = list(replies or [])
         self.prompts: list[str] = []
+        self.searches = list(DEFAULT_SEARCHES if searches is None else searches)
+        self.tool_calls: list[tuple[str, str]] = []
 
-    async def chat(self, message: str) -> str:
-        self.prompts.append(message)
+    def _next_reply(self) -> str:
         if not self.replies:
             return "A short explanation."
         reply = self.replies.pop(0)
         if isinstance(reply, Exception):
             raise reply
         return reply
+
+    async def chat(self, message: str) -> str:
+        self.prompts.append(message)
+        return self._next_reply()
+
+    async def chat_with_tools(
+        self,
+        message: str,
+        tools: list[ToolSpec],
+        handler: ToolHandler,
+        *,
+        max_rounds: int = 4,
+    ) -> str:
+        self.prompts.append(message)
+        for query, audience in self.searches:
+            self.tool_calls.append((query, audience))
+            # Not swallowed: a handler that raises must reach the caller here
+            # exactly as it would through the real provider's loop.
+            await handler(tools[0].name, {"query": query, "audience": audience})
+        return self._next_reply()
 
 
 class FakeProviderError(genai_errors.APIError):

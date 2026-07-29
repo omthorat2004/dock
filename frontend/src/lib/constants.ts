@@ -27,4 +27,11 @@ export const ERROR_CODES = {
   tokenLimitReached: "token_limit_reached",
   /** 409 — the topic's video shelf is full. */
   youtubeLimitReached: "youtube_limit_reached",
+  /**
+   * 429 — YouTube's own quota, not the student's model key. Waiting is the
+   * only fix, so the panel says so rather than pointing at /api-key.
+   */
+  youtubeRateLimited: "youtube_rate_limited",
+  /** 503 — YouTube search is unreachable or not configured on the server. */
+  youtubeUnavailable: "youtube_unavailable",
 } as const;

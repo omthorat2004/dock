@@ -20,6 +20,10 @@ import type { Topic } from "@/lib/space-api";
  *
  * The player is an embed rather than a link out, so revising does not mean
  * leaving Dock for a tab full of recommendations.
+ *
+ * Filling the shelf is one server call that can take a while — the model runs
+ * real YouTube searches before it picks — so the button says what it is doing
+ * and the panel stays usable while it does.
  */
 export function VideoPanel({
   spaceId,
@@ -53,6 +57,13 @@ export function VideoPanel({
   const playingId = playing?.video_id ?? null;
   const needsKey = generate.error?.code === ERROR_CODES.apiKeyNotConfigured;
   const foundNothing = generate.isSuccess && generate.data.added.length === 0;
+
+  // YouTube being down or out of quota is not the student's mistake and there
+  // is nothing for them to fix, so it reads as a neutral "not right now"
+  // rather than as an error in danger red.
+  const youtubeIsDown =
+    generate.error?.code === ERROR_CODES.youtubeUnavailable ||
+    generate.error?.code === ERROR_CODES.youtubeRateLimited;
 
   return (
     <aside
@@ -116,8 +127,9 @@ export function VideoPanel({
       <div className="flex-1 overflow-y-auto px-5 py-4">
         {links.length === 0 ? (
           <p className="text-xs leading-relaxed text-muted">
-            No videos yet. Dock finds explainers for this topic and checks every
-            one against YouTube before adding it, so nothing here is a dead link.
+            No videos yet. Dock searches YouTube for this topic and picks a mix
+            of Indian and international explainers — every one a real search
+            result, so nothing here is a dead link.
           </p>
         ) : (
           <ul className="space-y-1">
@@ -184,7 +196,12 @@ export function VideoPanel({
             </button>
 
             {generate.isError ? (
-              <p role="alert" className="mt-2 text-xs leading-relaxed text-danger">
+              <p
+                role="alert"
+                className={`mt-2 text-xs leading-relaxed ${
+                  youtubeIsDown ? "text-muted" : "text-danger"
+                }`}
+              >
                 {generate.error.message}
               </p>
             ) : foundNothing ? (
