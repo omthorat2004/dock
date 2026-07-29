@@ -31,8 +31,10 @@ syllabus section, with the lesson's topics laid out as cards on a grid canvas.
 - The canvas pans and zooms with **one CSS transform on one wrapper**, and the
   cards reach it as `children` so a pan never re-renders them. No canvas element,
   no graph library.
-- **A YouTube link is never stored on the model's word.** Every candidate is
-  verified through `core/youtube.py` first; unverified links do not reach Mongo.
+- **A YouTube link is never the model's own.** The model calls the `search_youtube`
+  tool and picks from what came back; ids it writes itself select nothing. Search
+  lives in `core/youtube.py` and needs `YOUTUBE_API_KEY` — without it the shelf
+  answers 503, it does not fall back to guessing.
 - The 20/5/10 limits live in `models/space.py` and `models/chat.py`, mirrored for
   the UI only in `frontend/src/lib/constants.ts`. The server is the authority —
   the client copies exist so a card can retire its own button, not so it can
@@ -74,12 +76,20 @@ Learn mode and the video shelf are live, both on the user's own key via
   conversation stays bounded. Overflow past the window is folded into the
   session's single summary, which is *replaced*, never appended to. A provider
   token-limit error sets `TopicSession.limit_reached`, and later sends are
-  refused with 413 before the model is called.
+  refused with 413 before the model is called. Rolling the summary is a second
+  model call, so it is queued on `BackgroundTasks` and runs *after* the reply is
+  sent — a turn it misses is folded in by the next one.
 - **Videos** — `POST /spaces/{id}/topics/{topic_id}/videos`. Five per request,
-  `MAX_YOUTUBE_LINKS` (20) in total. The model only *suggests*; every candidate
-  is resolved against YouTube's oEmbed endpoint and the dead ones are dropped,
-  so an empty result is a normal success. The stored title is YouTube's own.
-  Videos open in the **same panel slot as learn mode**, with an embedded player.
+  `MAX_YOUTUBE_LINKS` (20) in total. The model reaches YouTube through the
+  `search_youtube` tool (`AIProvider.chat_with_tools`), once per audience —
+  `india` (regionCode IN) and `global` (US) — and then picks from the hits. The
+  shelf alternates between the two audiences, so it is never all one or the
+  other, and it is filled from the search results even when the model's reply is
+  useless. Only embeddable videos are searched for, and the stored title is
+  YouTube's own. Search failures are their own answers: 429
+  `youtube_rate_limited` for spent quota, 503 `youtube_unavailable` for no key
+  or an unreachable API — checked *before* the model is called. Videos open in
+  the **same panel slot as learn mode**, with an embedded player.
 
 Next: topic extraction from the lesson text (topics are still typed in by hand at
 create time), a persisted card layout to replace the derived ring in

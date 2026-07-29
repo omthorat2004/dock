@@ -78,6 +78,10 @@ driver message or stack trace reach a client.
   even though `GET /spaces` filters on `user_id`.
 - Correctness is enforced by indexes, not by read-then-write checks. Registration
   inserts and catches `DuplicateKeyError`; checking first leaves a race.
+- Work the response does not depend on goes on FastAPI's `BackgroundTasks`, passed
+  into the service that queues it — chat's rolling summary is the case in point.
+  It is not a task queue: it runs in-process once the response is out, so only
+  queue work that is safe to lose and safe to repeat.
 
 ## Documents and schemas
 
@@ -171,8 +175,16 @@ Space { user_id, lesson_name, topics[], created_at, updated_at }
 Chat runs through a provider abstraction, so no vendor SDK is imported outside
 `app/ai/`:
 
-- `AIProvider` (ABC) has one async method: `chat(message) -> str`.
-- `GeminiProvider` wraps `google-genai` (`client.aio.interactions.create`).
+- `AIProvider` (ABC) has two async methods: `chat(message) -> str`, and
+  `chat_with_tools(message, tools, handler) -> str` for a prompt the model may
+  answer by calling tools first. A tool is a vendor-neutral `ToolSpec` (name,
+  description, JSON-Schema `parameters`); the `handler` runs one call and returns
+  anything JSON-serialisable. **Handler exceptions are not caught** — a tool that
+  fails because its downstream service is down ends the request with that error
+  rather than leaving the model to improvise around it.
+- `GeminiProvider` wraps `google-genai` (`client.aio.interactions.create`). Its
+  tool loop continues the same interaction by `previous_interaction_id` rather
+  than resending the transcript, and is bounded by `max_rounds`.
 - `build_provider(user)` picks the provider from the user's stored preferences —
   `model_name` selects the family (only `"gemini"` today), `model_version` is the
   model string. It raises `ApiKeyNotConfigured` (401) when the user has no key.
@@ -195,6 +207,9 @@ Chat runs through a provider abstraction, so no vendor SDK is imported outside
 - `get_settings()` is `lru_cache`d and refuses to boot production with the default
   `secret_key` or with insecure cookies.
 - Secrets stay in `.env` (gitignored); `.env.example` documents every key.
+- `youtube_api_key` is Dock's own, unlike the per-user AI key: YouTube search is
+  server quota. Unset means the video shelf answers 503 `youtube_unavailable`,
+  never a fallback that lets the model invent links.
 - CORS origins are explicit. Never `allow_origins=["*"]` with credentials enabled —
   the browser rejects it, and cookie auth depends on credentials.
 
