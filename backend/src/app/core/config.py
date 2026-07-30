@@ -20,7 +20,7 @@ class Settings(BaseSettings):
 
     # Override in every non-local environment. The app refuses to start in
     # production while this is still the default.
-    secret_key: str = "dev-only-insecure-secret-change-me"
+    secret_key: str
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 30
