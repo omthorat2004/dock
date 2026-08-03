@@ -7,8 +7,8 @@
  * real Gemini catalogue; the first entry is the default for a new user.
  */
 export const GEMINI_MODELS = [
-  { value: "gemini-3.6-flash", label: "Gemini 3.6 Flash — free, fast" },
-  { value: "gemini-3.6-pro", label: "Gemini 3.6 Pro — deeper reasoning" },
+  { value: "gemini-3.6-flash", label: "Gemini 3.6 Flash (free, fast)" },
+  { value: "gemini-3.6-pro", label: "Gemini 3.6 Pro (deeper reasoning)" },
   { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
 ] as const;
 

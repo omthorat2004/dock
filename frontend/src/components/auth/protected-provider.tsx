@@ -11,7 +11,7 @@ import { AuthShimmer } from "@/components/auth/auth-shimmer";
  *
  * The session lives in httpOnly cookies, so only the API can confirm it. This
  * resolves it once, sends anyone unauthenticated to `/login`, and shows a
- * shimmer until the answer is in — never flashing the page to a user who will
+ * shimmer until the answer is in, never flashing the page to a user who will
  * bounce.
  */
 export function ProtectedProvider({

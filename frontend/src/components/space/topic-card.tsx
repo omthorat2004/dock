@@ -6,7 +6,7 @@ import type { Topic } from "@/lib/space-api";
 /**
  * One topic on the canvas: what it is, and the two ways into it.
  *
- * Both ways open a panel beside the canvas rather than expanding in place —
+ * Both ways open a panel beside the canvas rather than expanding in place:
  * a card is too small to watch a video or hold a conversation in, and the
  * canvas has to stay legible behind whichever is open.
  *
@@ -91,7 +91,7 @@ export function TopicCard({
 }
 
 /**
- * A neutral pill stating a limit. Deliberately not `danger` — nothing has gone
+ * A neutral pill stating a limit. Deliberately not `danger`: nothing has gone
  * wrong, the topic has simply had everything Dock can give it.
  */
 function StatusChip({ children }: { children: React.ReactNode }) {

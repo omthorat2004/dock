@@ -1,7 +1,7 @@
 import type { SpaceSummary } from "@/lib/space-api";
 
 /**
- * A space's URL segment: the lesson name, then its id — `photosynthesis-6a66…`.
+ * A space's URL segment: the lesson name, then its id, as in `photosynthesis-6a66…`.
  *
  * The whole string is the route's `id` param. Only the trailing id is load
  * bearing; the lesson name is there so the URL reads as something, and it can
@@ -12,7 +12,7 @@ export function spaceSlug(space: Pick<SpaceSummary, "id" | "lesson_name">): stri
   return name ? `${name}-${space.id}` : space.id;
 }
 
-/** The id back out of a slug — everything after the last hyphen. */
+/** The id back out of a slug: everything after the last hyphen. */
 export function spaceIdFromSlug(slug: string): string {
   return slug.slice(slug.lastIndexOf("-") + 1);
 }

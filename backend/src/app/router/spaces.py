@@ -27,7 +27,7 @@ async def create_space(
     status_code=status.HTTP_200_OK,
     summary="Every space the caller owns",
     description=(
-        "Returns one summary per space — lesson name, how many topics it holds, "
+        "Returns one summary per space: lesson name, how many topics it holds, "
         "and when it was created and last updated. The topics themselves are "
         "not included; they come with the space's own detail."
     ),

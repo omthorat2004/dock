@@ -6,7 +6,7 @@ import { buttonStyles } from "@/components/ui/button";
 
 /**
  * Global error boundary. Next.js renders this for any uncaught error in a route
- * below it — the user gets a real page instead of a blank screen.
+ * below it, so the user gets a real page instead of a blank screen.
  */
 export default function GlobalError({
   error,

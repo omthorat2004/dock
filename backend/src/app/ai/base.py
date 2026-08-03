@@ -32,7 +32,7 @@ class AIProvider(ABC):
 
     Every concrete provider wraps one vendor SDK behind these two calls, so
     nothing outside `app.ai` imports a vendor client. Adding another provider is
-    a new subclass plus a branch in `build_provider` — callers never change.
+    a new subclass plus a branch in `build_provider`; callers never change.
     """
 
     @abstractmethod

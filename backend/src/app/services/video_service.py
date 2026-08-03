@@ -1,7 +1,7 @@
 """A topic's video shelf: the model searches YouTube, it does not recall it.
 
 The shelf fills `YOUTUBE_LINKS_PER_REQUEST` at a time and stops for good at
-`MAX_YOUTUBE_LINKS`. Every video on it came back from a real YouTube search —
+`MAX_YOUTUBE_LINKS`. Every video on it came back from a real YouTube search;
 the model's only job is deciding *what to search for* and which of the hits are
 worth a revising student's time. It never supplies an id, so a shelf can no
 longer come back half empty because the ids it invented did not exist.
@@ -36,7 +36,7 @@ from app.services.space_service import SpaceService
 
 logger = logging.getLogger("app.videos")
 
-#: How the two audiences are asked for. Neither filters — `region_code` and
+#: How the two audiences are asked for. Neither filters: `region_code` and
 #: `relevance_language` rank the same catalogue the way YouTube would for a
 #: viewer in that market, which is how "Indian" and "global" stop being a guess
 #: about channel names and become a property of the search itself.
@@ -60,7 +60,7 @@ SEARCH_TOOL = ToolSpec(
     name="search_youtube",
     description=(
         "Search YouTube and get back videos that really exist, with their id, "
-        "title and channel. This is the only way to reach YouTube — you cannot "
+        "title and channel. This is the only way to reach YouTube; you cannot "
         "know a video id without it. Call it several times, with different "
         "wording and both audiences."
     ),
@@ -70,7 +70,7 @@ SEARCH_TOOL = ToolSpec(
             "query": {
                 "type": "string",
                 "description": (
-                    "What to search for, phrased as a student would — "
+                    "What to search for, phrased as a student would: "
                     "'calvin cycle explained class 11', not 'best videos'."
                 ),
             },
@@ -91,18 +91,18 @@ SEARCH_TOOL = ToolSpec(
 
 _VIDEO_FRAME = (
     "You are finding YouTube explainers for a student revising one topic.\n"
-    "Use the search_youtube tool. Never write a video id yourself — the only "
+    "Use the search_youtube tool. Never write a video id yourself; the only "
     "ids that exist are the ones a search returned.\n"
     "Run at least two searches: one with audience 'india' and one with "
     "audience 'global', so the student gets both Indian teachers (channels "
     "like Physics Wallah, Vedantu, Khan Academy India, Unacademy, "
-    "CodeWithHarry, Apna College, Gate Smashers, NPTEL — whichever suit the "
+    "CodeWithHarry, Apna College, Gate Smashers, NPTEL, whichever suit the "
     "subject) and established international English ones (Khan Academy, "
     "CrashCourse, 3Blue1Brown, Veritasium and the like). Search again with "
     "different wording if the hits look thin or off-topic.\n"
     "Prefer a clear full explanation of this topic over a playlist, a shorts "
     "clip or a whole-course video.\n"
-    "Then answer with JSON only — an array of the video ids you chose, best "
+    "Then answer with JSON only: an array of the video ids you chose, best "
     "first, taken only from the search results, about half from each "
     "audience. No prose, no code fence."
 )
@@ -127,7 +127,7 @@ def _picked_ids(reply: str) -> list[str]:
     """The ids the model chose, in its order.
 
     The prompt asks for a JSON array and that is the path taken when the reply
-    parses. It often does not — a stray sentence before the array is enough —
+    parses. It often does not (a stray sentence before the array is enough),
     so the fallback scans the raw text. Either way an id is only ever a
     *selector* into what a search returned, so an invented one selects nothing
     and disappears.
@@ -165,7 +165,7 @@ def _alternating(
     The model's ranking is respected *within* each audience but not across
     them: left alone a model will happily return five videos from whichever
     search read better, and the point of running two was to get both. Starting
-    on 'india' is deliberate — it is the half a plain YouTube search is least
+    on 'india' is deliberate: it is the half a plain YouTube search is least
     likely to have surfaced on its own.
 
     Ids the model did not pick queue up behind the ones it did, so a reply that
@@ -223,7 +223,7 @@ class VideoService:
         known = {link.video_id for link in topic.youtube_links}
 
         # Every hit the model's searches turned up, by id, tagged with the
-        # audience that found it. This — not the model's reply — is the set a
+        # audience that found it. This, not the model's reply, is the set a
         # shelf can be built from.
         pool: dict[str, tuple[str, VideoResult]] = {}
 

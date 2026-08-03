@@ -3,7 +3,7 @@
  *
  * Derived, not stored. A persisted per-space layout is the next step for the
  * canvas; until it exists, a deterministic ring keeps the arrangement stable
- * across loads — the same space always draws the same way — without inventing
+ * across loads (the same space always draws the same way) without inventing
  * coordinates on the server that the student cannot yet move.
  */
 
@@ -14,7 +14,7 @@ const RING_GAP = 320;
 
 /**
  * Rings are flattened into ellipses because a canvas viewport is wider than it
- * is tall — a true circle wastes the horizontal space and overflows vertically.
+ * is tall; a true circle wastes the horizontal space and overflows vertically.
  */
 const VERTICAL_SQUASH = 0.62;
 

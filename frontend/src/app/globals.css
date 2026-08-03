@@ -101,7 +101,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* The canvas grid — Dock's one signature element. Kept deliberately quiet. */
+/* The canvas grid: Dock's one signature element. Kept deliberately quiet. */
 .grid-surface {
   background-image:
     linear-gradient(to right, var(--grid-line) 1px, transparent 1px),

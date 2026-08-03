@@ -16,7 +16,7 @@ export const spaceKeys = {
 };
 
 /**
- * One space in full — the canvas's own load, with every topic's video shelf
+ * One space in full: the canvas's own load, with every topic's video shelf
  * and chat state. Separate from the list query on purpose: the list is
  * summaries and must not be invalidated by a chat or a video generation.
  */

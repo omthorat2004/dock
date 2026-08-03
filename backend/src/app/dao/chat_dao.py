@@ -15,7 +15,7 @@ class ChatMessageDAO(BaseDAO):
 
     `_id` is always the tiebreaker. A turn writes the student's message and the
     reply in one `insert_many` and stamps both with the same instant, so
-    `created_at` alone leaves their order undefined — and an answer sorted
+    `created_at` alone leaves their order undefined, and an answer sorted
     above its question is not a transcript. ObjectIds are generated in insert
     order, which settles it.
     """

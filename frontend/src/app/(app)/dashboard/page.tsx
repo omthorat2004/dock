@@ -6,7 +6,7 @@ import { SpaceList } from "@/components/spaces/space-list";
 import { useUser } from "@/hooks/use-auth";
 
 export default function DashboardPage() {
-  // Already fetched and cached by the layout's guard — this is a cache read.
+  // Already fetched and cached by the layout's guard, so this is a cache read.
   const { user } = useUser();
   console.log(user)
   const firstName = user?.full_name.split(" ")[0] ?? "there";

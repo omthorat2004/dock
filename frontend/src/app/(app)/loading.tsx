@@ -1,6 +1,6 @@
 /**
  * Route-level loading UI. Next.js renders this automatically while the server
- * component below it streams — no client state, no spinner library.
+ * component below it streams. No client state, no spinner library.
  */
 export default function AppLoading() {
   return (

@@ -7,7 +7,7 @@ class GenerateVideosResponse(BaseModel):
     """The result of one "find videos" request.
 
     Both lists are sent because the client needs both answers: `links` is the
-    shelf to render, and `added` is how many are new — which can be zero when
+    shelf to render, and `added` is how many are new, which can be zero when
     every search came back with videos the student already has.
     """
 

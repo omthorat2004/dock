@@ -60,7 +60,7 @@ def test_a_created_space_stores_topics_with_an_empty_session(client):
 
 
 def test_the_same_lesson_can_be_shared_twice(client):
-    # lesson_name is not unique on purpose — a student may re-share a lesson
+    # lesson_name is not unique on purpose; a student may re-share a lesson
     # when their syllabus changes.
     register(client)
     assert client.post(ENDPOINT, json=LESSON).status_code == 201

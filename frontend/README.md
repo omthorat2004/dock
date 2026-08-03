@@ -35,7 +35,7 @@ axios instance sends `withCredentials` and stores nothing itself.
 | `lib/relative-time.ts` | `formatRelativeTime` ("3 days ago"), `formatDate` |
 | `lib/demo-space.ts` | Placeholder canvas content until topics are extracted |
 
-The canvas pans and zooms with **one CSS transform on one wrapper** — no library.
+The canvas pans and zooms with **one CSS transform on one wrapper**, no library.
 Cards are passed to `SpaceCanvas` as `children`, so panning re-renders the canvas
 alone and React skips the cards entirely. See the `frontend-nextjs` skill before
 changing it.

@@ -10,8 +10,8 @@ import { type GenerateVideosResponse, videosApi } from "@/lib/video-api";
  * Fill the next few videos into one topic's shelf.
  *
  * The response carries the shelf as it now stands, so it is written straight
- * into the space already in the cache rather than refetching the whole space
- * — every other topic on the canvas is unchanged, and a refetch would discard
+ * into the space already in the cache rather than refetching the whole space:
+ * every other topic on the canvas is unchanged, and a refetch would discard
  * and rebuild all of them to learn about one.
  */
 export function useGenerateVideos(spaceId: string, topicId: string) {

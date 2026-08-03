@@ -1,7 +1,7 @@
 /**
  * Product limits and the API error codes the UI branches on.
  *
- * The limits are mirrors of the server's, which is the authority — the backend
+ * The limits are mirrors of the server's, which is the authority: the backend
  * declares them in `models/space.py` and `models/chat.py` and enforces them on
  * every request. They exist here so a card can retire its own button and say
  * why *before* a call it knows will be refused, not so the client can decide.
@@ -21,17 +21,17 @@ export const RECENT_MESSAGE_WINDOW = 10;
  * dead session, the other a signed-in user who has not set up a model yet.
  */
 export const ERROR_CODES = {
-  /** 401 — signed in, but no provider key. Send them to /api-key, not /login. */
+  /** 401: signed in, but no provider key. Send them to /api-key, not /login. */
   apiKeyNotConfigured: "api_key_not_configured",
-  /** 413 — this topic's conversation no longer fits the model's input budget. */
+  /** 413: this topic's conversation no longer fits the model's input budget. */
   tokenLimitReached: "token_limit_reached",
-  /** 409 — the topic's video shelf is full. */
+  /** 409: the topic's video shelf is full. */
   youtubeLimitReached: "youtube_limit_reached",
   /**
-   * 429 — YouTube's own quota, not the student's model key. Waiting is the
+   * 429: YouTube's own quota, not the student's model key. Waiting is the
    * only fix, so the panel says so rather than pointing at /api-key.
    */
   youtubeRateLimited: "youtube_rate_limited",
-  /** 503 — YouTube search is unreachable or not configured on the server. */
+  /** 503: YouTube search is unreachable or not configured on the server. */
   youtubeUnavailable: "youtube_unavailable",
 } as const;

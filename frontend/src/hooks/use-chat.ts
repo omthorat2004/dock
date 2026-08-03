@@ -20,7 +20,7 @@ export const chatKeys = {
 /**
  * One topic's conversation.
  *
- * Only fetched while the panel is open — a canvas of twenty topics must not
+ * Only fetched while the panel is open, because a canvas of twenty topics must not
  * pull twenty transcripts, which is the same reason only the open card mounts
  * its chat at all.
  */
@@ -74,7 +74,7 @@ export function useSendMessage(spaceId: string, topicId: string) {
     },
 
     onError: (error, _message, context) => {
-      // Put the transcript back — the message was never stored, so leaving it
+      // Put the transcript back: the message was never stored, so leaving it
       // on screen would claim it was.
       if (context?.previous) {
         queryClient.setQueryData(key, context.previous);

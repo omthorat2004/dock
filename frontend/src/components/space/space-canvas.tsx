@@ -24,7 +24,7 @@ function clamp(value: number, min: number, max: number) {
  * canvas library holding a second copy of everything. Two details do the work:
  *
  *  - the cards arrive as `children`, so a pan or zoom re-renders this component
- *    and *only* this component — React reuses the same child elements and skips
+ *    and *only* this component, since React reuses the same child elements and skips
  *    them entirely;
  *  - the transform is composited by the GPU, so a drag never triggers layout.
  */
@@ -97,14 +97,14 @@ export function SpaceCanvas({
     }
 
     // Attached by hand rather than with onWheel: React registers wheel
-    // listeners as passive, and a passive listener cannot preventDefault — so
+    // listeners as passive, and a passive listener cannot preventDefault, so
     // ctrl+scroll would zoom the browser instead of the canvas.
     container.addEventListener("wheel", onWheel, { passive: false });
     return () => container.removeEventListener("wheel", onWheel);
   }, [zoomBy]);
 
   function onPointerDown(event: React.PointerEvent<HTMLDivElement>) {
-    // Cards handle their own pointer events — a drag that starts on one is a
+    // Cards handle their own pointer events: a drag that starts on one is a
     // click on its buttons, not a pan.
     if ((event.target as HTMLElement).closest("[data-canvas-card]")) return;
 

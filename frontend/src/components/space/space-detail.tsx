@@ -12,7 +12,7 @@ import { topicPosition } from "@/lib/topic-layout";
 
 /**
  * Which panel is beside the canvas, and for which card. One piece of state,
- * not two — learn mode and the video shelf share the same slot, so opening
+ * not two, because learn mode and the video shelf share the same slot, so opening
  * either has to close the other.
  */
 type OpenPanel = { topicId: string; mode: "chat" | "videos" };
@@ -22,7 +22,7 @@ type OpenPanel = { topicId: string; mode: "chat" | "videos" };
  * laid out around it, and learn mode in a panel beside them.
  *
  * The cards are built here and handed to `SpaceCanvas` as children, so panning
- * and zooming re-render the canvas alone — React reuses these elements and
+ * and zooming re-render the canvas alone. React reuses these elements and
  * never walks the cards again.
  */
 export function SpaceDetail({ spaceId }: { spaceId: string }) {

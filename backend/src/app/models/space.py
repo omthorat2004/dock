@@ -22,8 +22,8 @@ YOUTUBE_LINKS_PER_REQUEST = 5
 class YoutubeLink(BaseModel):
     """One explainer on a topic's video shelf.
 
-    `title` is the one YouTube itself returned when the link was verified — not
-    the one the model guessed — so a shelf never labels a video with someone
+    `title` is the one YouTube itself returned when the link was verified, not
+    the one the model guessed, so a shelf never labels a video with someone
     else's title. `video_id` is what dedupes the shelf: the same video reached
     through `youtu.be`, `/shorts` and `watch?v=` is one video, not three.
     """
@@ -44,7 +44,7 @@ class TopicSession(BaseModel):
 
     session_id: str | None = None
     limit_reached: bool = False
-    # Both None while there is no session — the timestamps describe the chat,
+    # Both None while there is no session: the timestamps describe the chat,
     # not the topic, so they only start once the chat does.
     created_at: datetime | None = None
     updated_at: datetime | None = None
@@ -57,7 +57,7 @@ class TopicSession(BaseModel):
 
 
 class Topic(BaseModel):
-    """One thing to learn within the lesson — a card on the space's canvas.
+    """One thing to learn within the lesson: a card on the space's canvas.
 
     The id is minted by the app rather than left to Mongo, because a topic is
     nested inside its space and so never gets an `_id` of its own. It is what
@@ -86,8 +86,8 @@ class Space(BaseModel):
 
     Unlike users and refresh tokens, a space has no natural key to key itself
     on, so `_id` is left to Mongo. That is why `id` is None on a space that has
-    not been inserted yet and why `to_document` omits the field entirely —
-    writing an explicit None would store a null `_id` instead of letting the
+    not been inserted yet and why `to_document` omits the field entirely.
+    Writing an explicit None would store a null `_id` instead of letting the
     server generate one.
 
     `lesson_name` is deliberately *not* unique: a student may re-share the same
@@ -105,7 +105,7 @@ class Space(BaseModel):
 
     @property
     def topic_count(self) -> int:
-        """How many topics the space holds — what a space card shows."""
+        """How many topics the space holds: what a space card shows."""
         return len(self.topics)
 
     def topic_by_id(self, topic_id: str) -> Topic | None:

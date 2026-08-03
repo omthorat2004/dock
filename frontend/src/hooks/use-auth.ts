@@ -23,7 +23,7 @@ export const authKeys = {
  * `retry: false` matters here: a 401 is a legitimate answer ("nobody is signed
  * in"), not a transient failure worth retrying. The axios interceptor has
  * already tried to refresh before this settles, so an error means even the
- * refresh token is gone or expired — hence `isAuthenticated` is false.
+ * refresh token is gone or expired, hence `isAuthenticated` is false.
  */
 export function useUser(enabled = true) {
   const query = useQuery<User, ApiError>({
@@ -47,7 +47,7 @@ export function useUser(enabled = true) {
  * Mount this once per guarded area (the auth and protected providers do). The
  * query is the source of truth; the store is the shared, synchronous read the
  * providers and chrome key off. `set` here is zustand, not React state, so this
- * effect is a store write — not the setState-in-render the compiler rejects.
+ * effect is a store write, not the setState-in-render the compiler rejects.
  */
 export function useAuthSync() {
   const query = useUser();

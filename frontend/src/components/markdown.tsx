@@ -6,7 +6,7 @@ import remarkGfm from "remark-gfm";
 /**
  * Model output, rendered.
  *
- * A tutor's answer is markdown whether or not we asked for it — bold, lists,
+ * A tutor's answer is markdown whether or not we asked for it: bold, lists,
  * headings, the occasional table or code block. Printing it raw shows students
  * literal `**` and `|---|`, so it gets parsed.
  *
@@ -16,7 +16,7 @@ import remarkGfm from "remark-gfm";
  * from a model, which is ultimately shaped by whatever the student typed.
  *
  * Element styles are mapped by hand because the typography plugin is not
- * installed — and because the panel is 380px wide, which wants tighter spacing
+ * installed, and because the panel is 380px wide, which wants tighter spacing
  * than a prose default.
  */
 
@@ -48,7 +48,7 @@ const components: Components = {
   ),
   li: ({ children }) => <li className="leading-relaxed">{children}</li>,
 
-  // Headings inside a chat bubble are structural, not display type — they stay
+  // Headings inside a chat bubble are structural, not display type, so they stay
   // close to body size so an answer does not shout mid-conversation.
   h1: ({ children }) => (
     <h3 className="mb-2 mt-4 text-sm font-semibold tracking-tight first:mt-0">

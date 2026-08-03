@@ -1,4 +1,4 @@
-/** Background texture only — no colour, no glow. See the design-system skill. */
+/** Background texture only: no colour, no glow. See the design-system skill. */
 export function GridBackdrop({ fade = true }: { fade?: boolean }) {
   return (
     <div

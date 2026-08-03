@@ -1,7 +1,7 @@
 """Searching YouTube for videos that actually exist.
 
 A language model asked for "the five best explainers" answers with confident,
-well-formed YouTube URLs whose ids frequently belong to no video at all — which
+well-formed YouTube URLs whose ids frequently belong to no video at all, which
 is why this module used to guess-then-verify, and why a shelf so often came
 back with one or two links instead of five.
 
@@ -47,8 +47,8 @@ _RATE_LIMIT_REASONS = {
 }
 
 # A YouTube video id is exactly 11 characters of URL-safe base64. Matching the
-# id rather than the whole URL means every form the model might echo back —
-# watch, youtu.be, /shorts, /embed, with or without query junk — collapses to
+# id rather than the whole URL means every form the model might echo back
+# (watch, youtu.be, /shorts, /embed, with or without query junk) collapses to
 # one key.
 _VIDEO_ID = re.compile(r"(?:youtu\.be/|v=|/shorts/|/embed/|/live/)([A-Za-z0-9_-]{11})")
 _BARE_ID = re.compile(r"^[A-Za-z0-9_-]{11}$")
@@ -58,9 +58,9 @@ _BARE_ID = re.compile(r"^[A-Za-z0-9_-]{11}$")
 class VideoResult:
     """One search hit, as YouTube describes it.
 
-    Carries the channel as well as the title because the model picks with it —
-    "which of these is a teaching channel" is not answerable from a title alone
-    — even though only the title is ever stored.
+    Carries the channel as well as the title because the model picks with it:
+    "which of these is a teaching channel" is not answerable from a title alone,
+    even though only the title is ever stored.
     """
 
     video_id: str
@@ -122,7 +122,7 @@ def _raise_for_status(response: httpx.Response) -> None:
         logger.warning("YouTube search rate limited (%s)", reason or "no reason given")
         raise YoutubeRateLimited
 
-    # Everything else — a rejected key, a disabled API, an outage — is the same
+    # Everything else (a rejected key, a disabled API, an outage) is the same
     # story to the student: not right now. The reason is logged for whoever
     # holds the key, since only they can act on it.
     logger.error(
@@ -164,7 +164,7 @@ async def search_videos(
 
     `region_code` and `relevance_language` are what make an "Indian" search
     different from a global one: the same query, answered the way YouTube would
-    answer it in that market. They shape the ranking rather than filtering — a
+    answer it in that market. They shape the ranking rather than filtering: a
     Hindi-market search still surfaces English videos, which is exactly the mix
     a shelf wants.
 

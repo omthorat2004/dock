@@ -36,7 +36,7 @@ const onStorage = (e: StorageEvent) => {
   };
 }
 
-/** The DOM is the source of truth — `data-theme` if set, else the OS. */
+/** The DOM is the source of truth: `data-theme` if set, else the OS. */
 function getSnapshot(): Theme {
   const explicit = document.documentElement.dataset.theme;
   if (explicit === "light" || explicit === "dark") return explicit;

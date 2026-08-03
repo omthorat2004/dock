@@ -118,7 +118,7 @@ def test_the_prompt_carries_the_recent_window(client):
 
 
 def test_a_summary_appears_once_the_window_overflows(client):
-    """Six turns is twelve messages — two more than the window holds."""
+    """Six turns is twelve messages, two more than the window holds."""
     space_id = make_space(client)
     topic_id = topic_ids(client, space_id)[0]
     provider = use_provider(FakeProvider())
@@ -210,7 +210,7 @@ def test_the_limit_is_visible_on_the_space_and_in_history(client):
 
 
 def test_other_provider_failures_are_not_treated_as_a_limit(client):
-    """A rate limit must not close the session — it is retryable.
+    """A rate limit must not close the session; it is retryable.
 
     It also has to reach the global handler unchanged, which is the point of
     re-raising rather than swallowing anything that is not a token limit.

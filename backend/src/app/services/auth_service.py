@@ -28,7 +28,7 @@ class AuthService:
     """Registration, login, token issuing and refresh-token rotation.
 
     Holds the business rules; every query goes through a DAO. Raises domain
-    errors from `core.exceptions` — never `HTTPException`.
+    errors from `core.exceptions`, never `HTTPException`.
     """
 
     def __init__(self, db: AsyncDatabase) -> None:
@@ -79,7 +79,7 @@ class AuthService:
 
         if not stored.is_active:
             # The token was already rotated away. Either it leaked and is being
-            # replayed, or a client raced itself — kill every session for this
+            # replayed, or a client raced itself, so kill every session for this
             # user and make them sign in again.
             await self.refresh_tokens.revoke_all_for_user(stored.user_id)
             raise AuthenticationError("This session was ended. Please sign in again.")

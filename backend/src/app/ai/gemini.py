@@ -12,8 +12,8 @@ logger = logging.getLogger("app.ai.gemini")
 class GeminiProvider(AIProvider):
     """Google Gemini, via the `google-genai` SDK.
 
-    The vendor call lives only here. SDK errors — a rejected key, a hit rate
-    limit — are deliberately *not* caught: the app-level handler in
+    The vendor call lives only here. SDK errors (a rejected key, a hit rate
+    limit) are deliberately *not* caught: the app-level handler in
     `core.error_handlers` turns `google.genai.errors.APIError` into the API's
     standard error shape, so every route gets the same treatment for free.
     """
@@ -42,7 +42,7 @@ class GeminiProvider(AIProvider):
         Each round: read the `function_call` steps the model produced, run them,
         and continue the same interaction with the results. Continuing by
         `previous_interaction_id` rather than resending the transcript is what
-        keeps the loop cheap — the prompt is sent once, however many rounds it
+        keeps the loop cheap: the prompt is sent once, however many rounds it
         takes.
 
         Tool calls in one round are run in order rather than concurrently: a

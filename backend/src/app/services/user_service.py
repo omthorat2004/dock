@@ -9,7 +9,7 @@ class UserService:
     """User profile and AI-provider configuration.
 
     Holds the rules; every query goes through the DAO. Raises domain errors from
-    `core.exceptions` — never `HTTPException`.
+    `core.exceptions`, never `HTTPException`.
     """
 
     def __init__(self, db: AsyncDatabase) -> None:
@@ -20,7 +20,7 @@ class UserService:
     ) -> None:
         """Store the caller's provider API key and chosen model.
 
-        The provider family (`model_name`) is still defaulted to Gemini — only
+        The provider family (`model_name`) is still defaulted to Gemini; only
         the model version is user-chosen for now. When more providers land, the
         family is derived from the model instead of hard-defaulted here.
         """

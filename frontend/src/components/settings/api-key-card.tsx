@@ -62,7 +62,7 @@ export function ApiKeyCard() {
         <h2 className="text-lg font-semibold tracking-tight">Gemini API key</h2>
         <p className="text-pretty text-sm leading-relaxed text-muted">
           Dock uses your own Google Gemini key to power the model. The free tier
-          is enough to start — pick a model, paste your key, and both stay on
+          is enough to start. Pick a model, paste your key, and both stay on
           your account.
         </p>
       </header>
@@ -104,7 +104,7 @@ export function ApiKeyCard() {
               spellCheck={false}
               value={value}
               onChange={(event) => setValue(event.target.value)}
-              placeholder={configured ? "A key is saved — enter a new one to replace it" : "AIza…"}
+              placeholder={configured ? "A key is saved. Enter a new one to replace it" : "AIza…"}
               className="w-full rounded-lg border border-border bg-surface px-3.5 py-2.5 pr-11 text-sm outline-none transition-colors placeholder:text-muted/60 focus:border-accent focus:ring-2 focus:ring-accent/20"
             />
 

@@ -39,7 +39,7 @@ class ChatReply(BaseModel):
 
     session_id: str
     reply: ChatMessageRead
-    #: Always false here — a send that hit the limit raises 413 instead. It is
+    #: Always false here: a send that hit the limit raises 413 instead. It is
     #: present so the client reads session state from one field in both shapes.
     limit_reached: bool = False
 

@@ -2,7 +2,7 @@ import { api } from "@/lib/axios.config";
 
 /**
  * A space as a card shows it. The list endpoint never sends the topics
- * themselves — only how many there are — so this is the whole shape.
+ * themselves, only how many there are, so this is the whole shape.
  */
 export type SpaceSummary = {
   id: string;
@@ -33,7 +33,7 @@ export type Topic = {
   id: string;
   topic_name: string;
   youtube_links: YoutubeLink[];
-  /** Computed by the server — the client never counts the shelf itself. */
+  /** Computed by the server; the client never counts the shelf itself. */
   video_limit_reached: boolean;
   session: TopicSession;
 };
@@ -53,7 +53,7 @@ export type CreateSpacePayload = {
   topics: string[];
 };
 
-/** Every call to the FastAPI spaces routes lives here — one place per endpoint. */
+/** Every call to the FastAPI spaces routes lives here, one place per endpoint. */
 export const spacesApi = {
   async create(payload: CreateSpacePayload): Promise<SpaceSummary> {
     const { data } = await api.post<SpaceSummary>("/spaces", payload);

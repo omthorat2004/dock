@@ -29,7 +29,7 @@ type Options = {
  * Client-side async state: status, data and error in one place, with stale and
  * unmounted results discarded.
  *
- * Use this for client-triggered work — polling, lazy panels, anything the user
+ * Use this for client-triggered work: polling, lazy panels, anything the user
  * kicks off after the page has loaded. It is *not* for initial page data: fetch
  * that in a server component, and let `loading.tsx` cover the wait.
  */
@@ -42,7 +42,7 @@ export function useAsync<T, Args extends unknown[] = []>(
   const [error, setError] = useState<Error | null>(null);
 
   const mounted = useRef(true);
-  // Only the most recent call may write to state — protects against races when
+  // Only the most recent call may write to state, which protects against races when
   // calls resolve out of order.
   const callId = useRef(0);
 

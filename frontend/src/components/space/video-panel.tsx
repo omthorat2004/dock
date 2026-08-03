@@ -15,14 +15,14 @@ import type { Topic } from "@/lib/space-api";
  *
  * The same surface learn mode uses, for the same reason: the topic stays in
  * view while you watch, and Escape closes it. The difference is only what
- * fills the panel — explainers matched to this topic instead of a conversation
+ * fills the panel: explainers matched to this topic instead of a conversation
  * about it.
  *
  * The player is an embed rather than a link out, so revising does not mean
  * leaving Dock for a tab full of recommendations.
  *
- * Filling the shelf is one server call that can take a while — the model runs
- * real YouTube searches before it picks — so the button says what it is doing
+ * Filling the shelf is one server call that can take a while: the model runs
+ * real YouTube searches before it picks, so the button says what it is doing
  * and the panel stays usable while it does.
  */
 export function VideoPanel({
@@ -37,7 +37,7 @@ export function VideoPanel({
   const generate = useGenerateVideos(spaceId, topic.id);
   const links = topic.youtube_links;
 
-  // What the student picked, by id rather than index — a generate appends to
+  // What the student picked, by id rather than index, because a generate appends to
   // the list, and an index would silently come to mean a different video.
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -51,7 +51,7 @@ export function VideoPanel({
 
   // Derived, not synced: falling back to the first video means the player
   // fills itself as soon as any arrive, without an effect writing state back
-  // during render — which the React Compiler lint rejects outright.
+  // during render, which the React Compiler lint rejects outright.
   const playing =
     links.find((link) => link.video_id === selectedId) ?? links[0] ?? null;
   const playingId = playing?.video_id ?? null;
@@ -128,7 +128,7 @@ export function VideoPanel({
         {links.length === 0 ? (
           <p className="text-xs leading-relaxed text-muted">
             No videos yet. Dock searches YouTube for this topic and picks a mix
-            of Indian and international explainers — every one a real search
+            of Indian and international explainers, every one a real search
             result, so nothing here is a dead link.
           </p>
         ) : (
@@ -169,7 +169,7 @@ export function VideoPanel({
       <div className="border-t border-border px-5 py-4">
         {topic.video_limit_reached ? (
           <p className="text-xs leading-relaxed text-muted">
-            That is all {MAX_YOUTUBE_LINKS} videos for this topic — Dock cannot
+            That is all {MAX_YOUTUBE_LINKS} videos for this topic. Dock cannot
             show you more.
           </p>
         ) : needsKey ? (

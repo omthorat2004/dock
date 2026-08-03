@@ -12,7 +12,7 @@ def _object_id(value: str) -> ObjectId | None:
     """A space's `_id` as Mongo stores it, or None if the string is not one.
 
     Spaces are the one collection whose ids the *server* mints, so unlike users
-    and refresh tokens they are `ObjectId`s rather than UUID strings — a filter
+    and refresh tokens they are `ObjectId`s rather than UUID strings; a filter
     built from the raw string would silently match nothing. A malformed id is
     not an error here; it is simply a space that does not exist, and the caller
     turns that into the same 404 as any other miss.
@@ -64,7 +64,7 @@ class SpaceDAO(BaseDAO):
         """Every space a user owns, reduced to what a card shows.
 
         The topic count is computed by Mongo (`$size`) rather than by loading
-        the arrays and counting them here — a list of twenty spaces should not
+        the arrays and counting them here: a list of twenty spaces should not
         pull twenty topic arrays, each with its youtube links and session.
         Most recently updated first, which is the order the dashboard wants.
         """
@@ -80,7 +80,7 @@ class SpaceDAO(BaseDAO):
 
         summaries: list[dict[str, Any]] = []
         async for document in cursor:
-            # The `_id` → `id` seam, same as `Model.from_document` — this
+            # The `_id` → `id` seam, same as `Model.from_document`; this
             # projection never builds a full model, so it maps the key itself.
             document["id"] = str(document.pop("_id"))
             summaries.append(document)

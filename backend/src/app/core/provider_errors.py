@@ -2,8 +2,8 @@
 
 This lives apart from `core.error_handlers` because two callers need it and
 only one of them is a handler: the global handler turns a provider error into
-an HTTP response, and `ChatService` needs to recognise *one* of those cases —
-the blown context window — in order to record it on the session before the
+an HTTP response, and `ChatService` needs to recognise *one* of those cases,
+the blown context window, in order to record it on the session before the
 error travels on.
 
 Nothing here imports a vendor SDK. The inputs are a status code and a message,
@@ -15,11 +15,11 @@ from fastapi import status
 
 #: The code returned when a prompt is too large for the model. `ChatService`
 #: matches on this to set `TopicSession.limit_reached`, and the frontend matches
-#: on it to explain why the composer is closed — so it is named once, here.
+#: on it to explain why the composer is closed, so it is named once, here.
 TOKEN_LIMIT_CODE = "token_limit_reached"
 
 # Phrases that mark a provider 400 as "the prompt blew the context window"
-# rather than "the key is bad" — both come back as 400s, so the message is the
+# rather than "the key is bad". Both come back as 400s, so the message is the
 # only tell. Kept specific so a "token" in an auth message is not misread.
 _TOKEN_LIMIT_HINTS = (
     "token count",

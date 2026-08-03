@@ -11,7 +11,7 @@ import type { Topic } from "@/lib/space-api";
  * Learn mode: the chat for one topic, in a panel beside the canvas.
  *
  * A panel rather than a modal, so the topic stays in view while you read. Only
- * the open topic's conversation is mounted — the cards hold no chat of their
+ * the open topic's conversation is mounted; the cards hold no chat of their
  * own, which is what keeps a big canvas cheap, and it is why the history query
  * lives here rather than on the card.
  */
@@ -108,7 +108,7 @@ export function LearnPanel({
 
         {messages.map((message, index) =>
           message.role === "user" ? (
-            // The student's own words, shown exactly as typed — parsing these
+            // The student's own words, shown exactly as typed. Parsing these
             // would mean their stray asterisks silently changed the message.
             <div key={`${message.created_at}-${index}`} className="flex justify-end">
               <p className="max-w-[85%] whitespace-pre-wrap rounded-xl bg-accent-subtle px-3.5 py-2.5 text-sm leading-relaxed text-foreground">
@@ -141,7 +141,7 @@ export function LearnPanel({
             className="rounded-lg border border-border bg-subtle px-3.5 py-2.5 text-xs leading-relaxed text-muted"
           >
             Context limit reached. This conversation has outgrown the model&apos;s
-            input budget, so Dock cannot add to it — open another topic to keep
+            input budget, so Dock cannot add to it. Open another topic to keep
             revising.
           </p>
         ) : needsKey ? (

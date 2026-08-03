@@ -19,7 +19,7 @@ async def lifespan(_: FastAPI):
 app = FastAPI(
     title=settings.project_name,
     version="0.1.0",
-    description="Backend for Dock — syllabus-aware revision spaces.",
+    description="Backend for Dock: syllabus-aware revision spaces.",
     lifespan=lifespan,
 )
 

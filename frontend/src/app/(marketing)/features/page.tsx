@@ -14,7 +14,7 @@ const sections = [
     id: "spaces",
     eyebrow: "Spaces",
     title: "A space per lesson that remembers the scope",
-    body: "A space is the container for one lesson. You share the lesson and the part of the syllabus it covers, and the space keeps that context for every session after — the topic names, and the depth you are expected to reach.",
+    body: "A space is the container for one lesson. You share the lesson and the part of the syllabus it covers, and the space keeps that context for every session after: the topic names, and the depth you are expected to reach.",
     points: [
       "Share the lesson you are revising",
       "Add the syllabus section that lesson covers",
@@ -26,7 +26,7 @@ const sections = [
     id: "canvas",
     eyebrow: "Topic cards",
     title: "The lesson's topics as cards on a grid",
-    body: "Instead of a sidebar list, a space opens as a grid of cards. Every topic in the lesson is a card you can move and cluster. Zoom from the whole lesson down to a single topic — the layout is yours and it persists.",
+    body: "Instead of a sidebar list, a space opens as a grid of cards. Every topic in the lesson is a card you can move and cluster. Zoom from the whole lesson down to a single topic. The layout is yours and it persists.",
     points: [
       "Cards laid out on a snapping grid background",
       "Drag to cluster by difficulty or by what is left",

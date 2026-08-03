@@ -9,7 +9,7 @@ import { ProtectedProvider } from "@/components/auth/protected-provider";
  * afterwards. It shows no user data until the gate has confirmed a session.
  *
  * The layout itself needs no hooks now that the header owns them, so it stays a
- * server component — only the guard and the header ship as client code.
+ * server component; only the guard and the header ship as client code.
  */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (

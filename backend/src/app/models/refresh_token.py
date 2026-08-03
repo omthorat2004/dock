@@ -11,7 +11,7 @@ COLLECTION = "refresh_tokens"
 class RefreshToken(BaseModel):
     """A stored refresh token.
 
-    Only the *hash* is persisted — a database dump must not hand out sessions.
+    Only the *hash* is persisted: a database dump must not hand out sessions.
     `id` is the token's `jti`, so a presented token maps straight to its record.
     """
 

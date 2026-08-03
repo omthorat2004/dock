@@ -1,5 +1,5 @@
 /**
- * The lesson at the centre of its canvas — what the whole space is about.
+ * The lesson at the centre of its canvas: what the whole space is about.
  *
  * Sits at (0, 0) so it is the thing you land on, and the topic cards read as
  * belonging to it. Deliberately the one accent-tinted surface on the canvas;

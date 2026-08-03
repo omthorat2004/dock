@@ -49,7 +49,7 @@ class UserResponse(BaseModel):
     full_name: str
     created_at: datetime
     #: Whether the user has stored a provider API key. The key itself is never
-    #: returned — only whether the client should show the "configured" state.
+    #: returned, only whether the client should show the "configured" state.
     has_api_key: bool = False
     #: The model the user has selected. Not a secret, so the client can show it
     #: as the current choice in the model picker.
@@ -59,7 +59,7 @@ class UserResponse(BaseModel):
 class AuthResponse(BaseModel):
     """Body for register/login/refresh.
 
-    The tokens never travel in the body — they are set as httpOnly cookies. All
+    The tokens never travel in the body; they are set as httpOnly cookies. All
     the client gets back is a message and the signed-in user.
     """
 

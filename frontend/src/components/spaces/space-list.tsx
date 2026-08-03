@@ -5,7 +5,7 @@ import { useSpaces } from "@/hooks/use-spaces";
 
 /**
  * The signed-in user's spaces. Client-side because the browser calls FastAPI
- * directly — there is no server-rendered copy of this list to hydrate.
+ * directly; there is no server-rendered copy of this list to hydrate.
  */
 export function SpaceList() {
   const { data: spaces, isPending, isError, error } = useSpaces();
@@ -37,8 +37,8 @@ export function SpaceList() {
       <div className="rounded-xl border border-dashed border-border bg-subtle p-10 text-center">
         <p className="text-sm font-medium">No spaces yet</p>
         <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted">
-          Create a space — share a lesson and the syllabus section it covers —
-          to start revising.
+          Create a space by sharing a lesson and the syllabus section it
+          covers, then start revising.
         </p>
       </div>
     );

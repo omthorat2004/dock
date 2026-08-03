@@ -31,12 +31,12 @@ DEFAULT_SEARCHES = [("topic for india", "india"), ("topic worldwide", "global")]
 class FakeProvider(AIProvider):
     """A provider that answers from a script and records what it was asked.
 
-    `replies` may hold exceptions as well as strings — raising one is how a
+    `replies` may hold exceptions as well as strings; raising one is how a
     test reproduces a provider failure without a vendor SDK object.
 
     `searches` is the tool-call half: the (query, audience) pairs this provider
     will put through `search_youtube` before answering. Passing `[]` models the
-    unhelpful case — a model that replies without ever searching.
+    unhelpful case: a model that replies without ever searching.
     """
 
     def __init__(
@@ -83,7 +83,7 @@ class FakeProviderError(genai_errors.APIError):
 
     It subclasses the vendor type rather than imitating it so both halves of
     the path are exercised: `ChatService` classifying it by `code`/`message`,
-    and — for everything that is *not* a token limit — the global handler
+    and, for everything that is *not* a token limit, the global handler
     catching it and mapping it to the right status. A stand-in `Exception`
     would fall through to the 500 catch-all and prove nothing.
     """

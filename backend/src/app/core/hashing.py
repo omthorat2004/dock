@@ -1,12 +1,13 @@
 """Hashing primitives.
 
-Two different jobs, two different algorithms — the distinction matters:
+Two different jobs, two different algorithms, and the distinction matters:
 
 * **Passwords** are low-entropy and guessable, so they need a *slow*, salted
   hash. That is bcrypt.
 * **API keys and tokens** are high-entropy secrets we generate ourselves. They
-  need a *fast*, deterministic hash so a lookup can find the record by its hash
-  — bcrypt cannot do that, since every bcrypt hash of the same input differs.
+  need a *fast*, deterministic hash so a lookup can find the record by its
+  hash; bcrypt cannot do that, since every bcrypt hash of the same input
+  differs.
   That is HMAC-SHA256 keyed with the app secret.
 
 Both verifications are constant-time. Never hash an API key with bcrypt, and

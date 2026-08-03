@@ -2,7 +2,7 @@
 
 Messages live in their own collection rather than nested in the space document.
 A space is read whole on every canvas load, and a conversation grows without
-bound — nesting one inside the other would make opening a space get slower the
+bound; nesting one inside the other would make opening a space get slower the
 more the student had talked.
 
 Both collections are keyed by `session_id` (minted by `TopicSession.start()`),
@@ -28,7 +28,7 @@ RECENT_MESSAGE_WINDOW = 10
 #: Who said it, in the vocabulary the model itself uses. The transcript is
 #: replayed into the provider on every turn, so storing "user"/"assistant"
 #: means the stored rows go straight into a prompt with nothing to translate.
-#: The product still says "student" and "Dock" — that is a label, applied in
+#: The product still says "student" and "Dock", but that is a label, applied in
 #: the UI, not a second name for this field.
 Role = Literal["user", "assistant"]
 
@@ -59,7 +59,7 @@ class ChatMessage(BaseModel):
 class ChatSummary(BaseModel):
     """The single rolling summary of everything that fell out of the window.
 
-    There is exactly **one** summary per session, and it is replaced — never
+    There is exactly **one** summary per session, and it is replaced, never
     appended to. Each rewrite folds the previous summary together with the
     messages that have since aged past `RECENT_MESSAGE_WINDOW`, so the old
     summary is superseded the moment the new one is written.

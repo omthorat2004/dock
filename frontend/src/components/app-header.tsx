@@ -14,12 +14,12 @@ const nav = [
 ];
 
 /**
- * The signed-in header — the app's counterpart to the marketing `SiteHeader`.
+ * The signed-in header, the app's counterpart to the marketing `SiteHeader`.
  *
  * It renders alongside `ProtectedProvider` rather than inside it, so the chrome
  * is up while the session resolves instead of appearing after it. The gate is
  * what runs `useAuthSync`; this only reads the status it writes, and holds a
- * placeholder for the parts that need a user — the same trick `SiteHeader`
+ * placeholder for the parts that need a user, the same trick `SiteHeader`
  * uses, so nothing shifts when the answer arrives.
  */
 export function AppHeader() {

@@ -6,8 +6,8 @@ import { api } from "@/lib/axios.config";
 type Health = { status: string; environment: string };
 
 /**
- * Live backend status. This is genuine client state — it changes without a
- * navigation — so it belongs in TanStack Query rather than a server component.
+ * Live backend status. This is genuine client state: it changes without a
+ * navigation, so it belongs in TanStack Query rather than a server component.
  */
 export function ApiStatus() {
   const { data, isPending, isError, refetch, isFetching } = useQuery({

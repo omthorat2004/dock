@@ -4,7 +4,7 @@ import { ApiKeyCard } from "@/components/settings/api-key-card";
 
 /**
  * Where a user configures the AI provider key. Lives under `(app)`, so
- * `ProtectedProvider` gates it — no per-page auth check needed.
+ * `ProtectedProvider` gates it, so no per-page auth check is needed.
  */
 export default function ApiKeyPage() {
   return (

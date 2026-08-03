@@ -11,7 +11,7 @@ class SpaceService:
     """Spaces: one lesson each, with the topics that lesson covers.
 
     Holds the rules; every query goes through the DAO. Raises domain errors
-    from `core.exceptions` — never `HTTPException`.
+    from `core.exceptions`, never `HTTPException`.
     """
 
     def __init__(self, db: AsyncDatabase) -> None:
@@ -35,12 +35,12 @@ class SpaceService:
         return await self.spaces.create(space)
 
     async def list_spaces(self, user_id: str) -> list[SpaceSummary]:
-        """The caller's spaces, as cards — lesson, topic count, timestamps."""
+        """The caller's spaces, as cards: lesson, topic count, timestamps."""
         rows = await self.spaces.list_summaries(user_id)
         return [SpaceSummary.model_validate(row) for row in rows]
 
     async def get_space(self, user_id: str, space_id: str) -> Space:
-        """One space in full — the canvas's own load.
+        """One space in full: the canvas's own load.
 
         A space belonging to somebody else is a 404, not a 403: whether an id
         exists is not something a stranger gets to learn.
@@ -58,7 +58,7 @@ class SpaceService:
     ) -> tuple[Space, Topic]:
         """The space and the one topic a chat or video request addresses.
 
-        Both are returned because every caller needs the space too — the lesson
+        Both are returned because every caller needs the space too: the lesson
         name grounds the prompt, and saving a topic means writing the space.
         """
         space = await self.get_space(user_id, space_id)
@@ -79,7 +79,7 @@ class SpaceService:
         """Give topics stored before they had ids a permanent one.
 
         `Topic.id` has a default factory, so a topic saved without the field
-        gets a *fresh* id every time the document is read — which would hand the
+        gets a *fresh* id every time the document is read, which would hand the
         canvas a different id on every load and break every chat and video call
         made against it. Writing them back on the first read makes them stick.
         """

@@ -23,15 +23,15 @@ export type LoginPayload = {
 };
 
 /**
- * What register/login/refresh return. The tokens are never in the body — they
- * arrive as httpOnly cookies — so all JavaScript sees is the message and user.
+ * What register/login/refresh return. The tokens are never in the body; they
+ * arrive as httpOnly cookies, so all JavaScript sees is the message and user.
  */
 export type AuthResponse = {
   message: string;
   user: User;
 };
 
-/** Every call to the FastAPI auth routes lives here — one place per endpoint. */
+/** Every call to the FastAPI auth routes lives here, one place per endpoint. */
 export const authApi = {
   async register(payload: RegisterPayload): Promise<AuthResponse> {
     // The response also sets the auth cookies; nothing is stored client-side.

@@ -16,11 +16,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Dock — revise on a canvas that remembers your syllabus",
+    default: "Dock: revise on a canvas that remembers your syllabus",
     template: "%s · Dock",
   },
   description:
-    "Drop in your syllabus and lesson notes. Dock lays every topic out as a card on an infinite grid canvas — open one to learn it in chat or watch the videos for it.",
+    "Drop in your syllabus and lesson notes. Dock lays every topic out as a card on an infinite grid canvas. Open one to learn it in chat or watch the videos for it.",
 };
 
 export default function RootLayout({

@@ -10,7 +10,7 @@ class CreateSpaceRequest(BaseModel):
     """A new space: the lesson, and the topics it covers.
 
     Only topic *names* are accepted. The youtube links and the chat session on
-    each topic are server-owned — a client cannot seed them.
+    each topic are server-owned; a client cannot seed them.
     """
 
     lesson_name: str = Field(min_length=1, max_length=200)
@@ -54,7 +54,7 @@ class CreateSpaceRequest(BaseModel):
 class SpaceSummary(BaseModel):
     """A space as a card sees it: never the topics themselves, just the count.
 
-    Listing spaces must not drag every topic — with its links and session —
+    Listing spaces must not drag every topic, with its links and session,
     across the wire, so this is the only shape the list endpoint returns.
     """
 
@@ -77,7 +77,7 @@ class TopicSessionRead(BaseModel):
     """A topic's chat state, without the timestamps the canvas has no use for.
 
     `session_id` is None until the student first chats, and `limit_reached`
-    says the conversation has outgrown the model's input budget — which is what
+    says the conversation has outgrown the model's input budget, which is what
     lets the card show a closed composer without having to send a message to
     discover it.
     """
@@ -101,7 +101,7 @@ class TopicRead(BaseModel):
 
 
 class SpaceDetail(BaseModel):
-    """One space in full — what opening its canvas loads.
+    """One space in full: what opening its canvas loads.
 
     The counterpart to `SpaceSummary`: the list deliberately withholds the
     topics, and this is the endpoint that has them.

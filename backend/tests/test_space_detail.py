@@ -1,4 +1,4 @@
-"""GET /spaces/{id} — what opening a canvas loads."""
+"""GET /spaces/{id}: what opening a canvas loads."""
 
 from bson import ObjectId
 from pymongo import MongoClient
@@ -65,7 +65,7 @@ def test_topics_stored_without_ids_are_backfilled_once(client):
     """A topic saved before `Topic.id` existed must not get a new id each read.
 
     `Topic.id` has a default factory, so without the backfill every load would
-    mint fresh ids — and the chat and video routes address a topic *by* id, so
+    mint fresh ids, and the chat and video routes address a topic *by* id, so
     the canvas would break on the second render.
     """
     register(client)

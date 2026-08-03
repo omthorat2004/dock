@@ -2,9 +2,9 @@
 
 Two token types, deliberately different:
 
-* **Access token** — short-lived (minutes), sent on every request, never stored
+* **Access token**: short-lived (minutes), sent on every request, never stored
   server-side. Cheap to verify, and expiry limits the damage if it leaks.
-* **Refresh token** — long-lived (days), used only to mint a new access token.
+* **Refresh token**: long-lived (days), used only to mint a new access token.
   Stored *hashed* in Mongo so it can be rotated and revoked; a stolen refresh
   token can be cut off, an access token cannot.
 

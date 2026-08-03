@@ -12,7 +12,7 @@ from app.core.provider_errors import classify_provider_error
 logger = logging.getLogger("app.errors")
 
 # `classify_provider_error` used to live here. It moved to `core.provider_errors`
-# once ChatService needed it too — a service must be able to recognise a blown
+# once ChatService needed it too: a service must be able to recognise a blown
 # context window without importing an error *handler*. It is re-exported so the
 # existing tests and imports keep working.
 __all__ = ["classify_provider_error", "register_error_handlers"]

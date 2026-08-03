@@ -29,7 +29,7 @@ const steps = [
 const highlights = [
   {
     title: "It knows your syllabus",
-    body: "Answers stay inside the scope you shared, at the depth your course expects — not the depth the internet defaults to.",
+    body: "Answers stay inside the scope you shared, at the depth your course expects, not the depth the internet defaults to.",
     icon: <path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6.5A2.5 2.5 0 0 1 4 17.5v-13Zm2.5 12.5H18v-2H6.5a.5.5 0 0 0 0 1v1Z" />,
   },
   {
@@ -71,7 +71,7 @@ export default function LandingPage() {
 
             <p className="mx-auto mt-5 max-w-2xl text-pretty text-base leading-relaxed text-muted sm:text-lg">
               Create a space for the lesson you are revising and share the
-              syllabus it covers. Dock turns it into topic cards on a grid — click
+              syllabus it covers. Dock turns it into topic cards on a grid. Click
               one to learn it in chat, or watch the videos picked for it.
             </p>
 

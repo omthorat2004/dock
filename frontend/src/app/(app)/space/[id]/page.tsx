@@ -10,7 +10,7 @@ export const metadata: Metadata = {
  * A space's canvas.
  *
  * The `id` segment is `lesson-name-<id>`; `spaceIdFromSlug` pulls the id back
- * out of it. The space itself is fetched in `SpaceDetail` — the browser calls
+ * out of it. The space itself is fetched in `SpaceDetail`: the browser calls
  * FastAPI directly, so there is nothing to load here.
  */
 export default async function SpacePage({

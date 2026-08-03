@@ -10,7 +10,7 @@ export const API_BASE_URL =
 
 export const REFRESH_PATH = "/auth/refresh";
 
-/** Endpoints that must never trigger a refresh — they *are* the auth flow. */
+/** Endpoints that must never trigger a refresh; they *are* the auth flow. */
 const AUTH_PATHS = ["/auth/login", "/auth/register", "/auth/logout", REFRESH_PATH];
 
 type RetriableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
@@ -46,7 +46,7 @@ export const api: AxiosInstance = axios.create({
 
 // While one refresh is in flight, every other 401 waits on the same promise.
 // Without this, parallel requests would each rotate the token and invalidate
-// each other — the backend revokes a refresh token the moment it is used.
+// each other, since the backend revokes a refresh token the moment it is used.
 let refreshInFlight: Promise<void> | null = null;
 
 /** Called when refreshing fails, so the app can send the user to /login. */
@@ -93,7 +93,7 @@ api.interceptors.response.use(
     const isAuthCall = AUTH_PATHS.some((path) => config?.url?.includes(path));
 
     // Not every 401 is an expired session. A route that needs the user's own
-    // provider key answers 401 when they have not set one — the session is
+    // provider key answers 401 when they have not set one. The session is
     // perfectly good, so refreshing it would rotate the tokens to learn
     // nothing and still fail.
     const isMissingApiKey =
@@ -114,7 +114,7 @@ api.interceptors.response.use(
         await refreshSession();
         return await api.request(config);
       } catch {
-        // The refresh itself failed — the session is genuinely over.
+        // The refresh itself failed, so the session is genuinely over.
         onSessionExpired?.();
       }
     }

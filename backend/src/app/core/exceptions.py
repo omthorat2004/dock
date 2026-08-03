@@ -98,7 +98,7 @@ class ContextLimitReached(AppError):
     over the limit never pays for another provider call to be told the same
     thing.
 
-    The code matches `provider_errors.TOKEN_LIMIT_CODE` deliberately — the
+    The code matches `provider_errors.TOKEN_LIMIT_CODE` deliberately: the
     frontend must not have to tell "the provider just said so" apart from "we
     already knew".
     """
@@ -111,14 +111,14 @@ class ContextLimitReached(AppError):
 
 
 class VideoLimitReached(ConflictError):
-    """The topic's video shelf is full — see `MAX_YOUTUBE_LINKS`."""
+    """The topic's video shelf is full; see `MAX_YOUTUBE_LINKS`."""
 
     code = "youtube_limit_reached"
     message = "This topic already holds every video it can."
 
 
 class YoutubeUnavailable(AppError):
-    """YouTube search cannot be reached — no key configured, or it is down.
+    """YouTube search cannot be reached: no key configured, or it is down.
 
     Distinct from `VideoLimitReached`: nothing is wrong with the topic, the
     search itself is unavailable, so the honest answer is "not right now" and

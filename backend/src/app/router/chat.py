@@ -29,7 +29,7 @@ async def send_message(
     provider: AIProviderDep,
     service: ChatServiceDep,
     # Rolling the session's summary is queued onto this and runs after the
-    # reply has been sent — see `ChatService.send_message`.
+    # reply has been sent; see `ChatService.send_message`.
     background: BackgroundTasks,
 ) -> ChatReply:
     reply = await service.send_message(
@@ -48,7 +48,7 @@ async def send_message(
     summary="A topic's conversation so far",
     description=(
         "Reading the transcript needs no model, so this route does not require "
-        "a configured API key — a student without one still sees what was said."
+        "a configured API key; a student without one still sees what was said."
     ),
 )
 async def get_history(

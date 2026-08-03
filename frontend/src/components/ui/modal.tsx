@@ -13,7 +13,7 @@ type ModalProps = {
  * A small accessible dialog: labelled, closes on Escape or a backdrop click,
  * locks body scroll while open, and moves focus into the panel on open.
  *
- * Deliberately minimal — no animation (motion only explains state changes) and
+ * Deliberately minimal: no animation (motion only explains state changes) and
  * no portal, since the signed-in layout has no transformed ancestor to clip a
  * fixed overlay.
  */

@@ -12,7 +12,7 @@ function makeQueryClient() {
         staleTime: 60 * 1000,
         gcTime: 5 * 60 * 1000,
         retry: (failureCount, error) => {
-          // Never retry auth or client errors — they will not fix themselves.
+          // Never retry auth or client errors; they will not fix themselves.
           const status = (error as { status?: number }).status;
           if (status && status >= 400 && status < 500) return false;
           return failureCount < 2;

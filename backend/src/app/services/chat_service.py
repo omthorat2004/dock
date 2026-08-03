@@ -1,6 +1,6 @@
 """Learn mode: one topic's conversation with the student's own model.
 
-The shape of a prompt is fixed and deliberately small — a frame, the lesson and
+The shape of a prompt is fixed and deliberately small: a frame, the lesson and
 topic it is scoped to, one rolling summary of everything older, and the last
 `RECENT_MESSAGE_WINDOW` messages verbatim. A conversation can run all evening
 without the prompt growing past that, which is the whole reason the summary
@@ -71,7 +71,7 @@ def _build_summary_prompt(
     parts = [_SUMMARY_FRAME]
     if previous is not None:
         parts.append(
-            "Notes so far — fold the new messages into these and return the "
+            "Notes so far. Fold the new messages into these and return the "
             f"combined result:\n{previous.content}"
         )
     parts.append(f"New messages:\n{_render(pending)}")
@@ -102,7 +102,7 @@ class ChatService:
         """One turn: prompt the model, store both sides, queue the summary.
 
         A session whose limit has already been reached is refused here, before
-        the provider is called — the answer cannot change, so paying for it
+        the provider is called: the answer cannot change, so paying for it
         again would only turn a fast 413 into a slow one.
 
         `background` is taken rather than reached for because rolling the
@@ -134,7 +134,7 @@ class ChatService:
                 topic.session.updated_at = utcnow()
                 await self.spaces.save_topics(space)
                 raise ContextLimitReached from exc
-            # Everything else — a bad key, a rate limit, an outage — is the
+            # Everything else (a bad key, a rate limit, an outage) is the
             # global handler's business, unchanged.
             raise
 
@@ -155,7 +155,7 @@ class ChatService:
         await self.spaces.save_topics(space)
 
         # Queued, not awaited: it runs once this reply is on its way to the
-        # student. Nothing in the next request depends on it having finished —
+        # student. Nothing in the next request depends on it having finished:
         # `_roll_summary` reads the message count each time, so a turn it
         # missed is simply folded in by the following one.
         background.add_task(self._roll_summary, provider, session_id, summary)
@@ -176,7 +176,7 @@ class ChatService:
         return topic.session, await self.messages.transcript(topic.session.session_id)
 
     async def _ensure_session(self, space: Space, topic: Topic) -> str:
-        """Mint the session on first use — not when the space was created."""
+        """Mint the session on first use, not when the space was created."""
         if topic.session.session_id is None:
             topic.session = TopicSession.start()
             await self.spaces.save_topics(space)
@@ -190,10 +190,10 @@ class ChatService:
 
         Only the messages between what the summary already covers and the start
         of the current window are re-read, so this stays one small prompt however
-        long the conversation gets — never a re-summary of the whole transcript.
+        long the conversation gets, never a re-summary of the whole transcript.
 
         Runs after the response, so failing here cannot fail the student's
-        message — by then the reply is already theirs. The window simply stays
+        message: by then the reply is already theirs. The window simply stays
         wider until a later turn succeeds, which is why `message_count` is
         stored rather than assumed.
         """

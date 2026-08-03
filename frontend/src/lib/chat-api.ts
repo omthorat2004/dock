@@ -1,7 +1,7 @@
 import { api } from "@/lib/axios.config";
 
 /**
- * Who said it, in the model's own vocabulary — which is how the backend stores
+ * Who said it, in the model's own vocabulary, which is how the backend stores
  * a transcript, so it can be replayed into a prompt with nothing to translate.
  * Turning these into "You" and "Dock" is the panel's job.
  */
@@ -14,7 +14,7 @@ export type ChatMessage = {
 };
 
 export type ChatHistory = {
-  /** Null for a topic nobody has chatted to yet — most cards on a canvas. */
+  /** Null for a topic nobody has chatted to yet, which is most cards on a canvas. */
   session_id: string | null;
   limit_reached: boolean;
   messages: ChatMessage[];

@@ -4,7 +4,7 @@ The browser never sees a token in JavaScript: the API sets the access and
 refresh tokens as httpOnly cookies, and the frontend sends them automatically
 with `withCredentials`. That keeps an XSS bug from walking off with a session.
 
-Two cookies rather than one, because they have very different lifetimes — the
+Two cookies rather than one, because they have very different lifetimes: the
 access token is minutes, the refresh token is weeks.
 """
 

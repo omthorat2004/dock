@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { GridBackdrop } from "@/components/grid-backdrop";
 import { buttonStyles } from "@/components/ui/button";
+import { GITHUB_REPO_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "About",
@@ -84,7 +85,7 @@ export default function AboutPage() {
             <p>
               There is more explanation available for any topic than anyone
               could watch. What is missing is a place that knows which of it
-              matters for you — which unit a topic sits in, how deep your course
+              matters for you: which unit a topic sits in, how deep your course
               goes, and what you have already covered.
             </p>
             <p>
@@ -145,6 +146,20 @@ export default function AboutPage() {
             </li>
           ))}
         </ol>
+
+        <p className="mt-8 text-sm text-muted">
+          Every line of it is public: the Next.js frontend and the FastAPI
+          backend live in one repository.{" "}
+          <a
+            href={GITHUB_REPO_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="font-medium text-accent underline-offset-4 hover:underline"
+          >
+            Read the source on GitHub
+          </a>
+          .
+        </p>
       </section>
 
       <section className="border-t border-border bg-subtle">
