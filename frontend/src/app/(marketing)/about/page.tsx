@@ -30,19 +30,24 @@ const principles = [
 
 const timeline = [
   {
+    phase: "Shipped",
+    title: "Spaces and topic cards",
+    body: "Accounts, then a space per lesson: share the lesson with its syllabus section and its topics come back as cards on the grid.",
+  },
+  {
+    phase: "Shipped",
+    title: "Learn mode and videos",
+    body: "Per-card chat grounded in your material, on your own model key, plus the video shelf matched to that one topic.",
+  },
+  {
     phase: "Now",
-    title: "Foundation",
-    body: "Marketing site, accounts, and the Next.js + FastAPI base the product is built on.",
+    title: "Topics that read themselves",
+    body: "Topics pulled out of the lesson text instead of typed in by hand, a layout that stays where you put it, and revision progress that means something.",
   },
   {
     phase: "Next",
-    title: "Spaces and topic cards",
-    body: "Create a space for a lesson, share it with its syllabus section, and get topic cards laid out on the grid.",
-  },
-  {
-    phase: "After",
-    title: "Learn mode and videos",
-    body: "Per-card chat grounded in your material, plus the matched video shelf.",
+    title: "Take the space with you",
+    body: "Export a space to PDF for the night before, and turn the lesson text into a condensed revision sheet you can read in one sitting.",
   },
 ];
 
@@ -124,12 +129,12 @@ export default function AboutPage() {
           Where we are
         </p>
         <h2 className="mt-3 max-w-2xl text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
-          Early, and building in the open
+          Built in the open, and still building
         </h2>
 
         <ol className="mt-12 space-y-px overflow-hidden rounded-xl border border-border bg-border">
           {timeline.map((t) => (
-            <li key={t.phase} className="grid gap-2 bg-surface p-6 sm:grid-cols-12 sm:gap-6">
+            <li key={t.title} className="grid gap-2 bg-surface p-6 sm:grid-cols-12 sm:gap-6">
               <span className="text-xs font-semibold uppercase tracking-widest text-muted sm:col-span-2">
                 {t.phase}
               </span>
