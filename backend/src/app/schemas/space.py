@@ -63,6 +63,40 @@ class CreateSpaceRequest(BaseModel):
         return cleaned
 
 
+class SuggestTopicsRequest(BaseModel):
+    """What the model needs to propose topics: the lesson, and who it is for."""
+
+    lesson_name: str = Field(min_length=1, max_length=200)
+    goal: str = Field(min_length=1, max_length=MAX_GOAL_LENGTH)
+    level: RevisionLevel
+    #: What the student has already picked, so the model proposes others.
+    topics: list[str] = Field(default_factory=list, max_length=MAX_TOPICS)
+
+    @field_validator("lesson_name", "goal")
+    @classmethod
+    def _required(cls, value: str) -> str:
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("This field is required.")
+        return cleaned
+
+    @field_validator("topics")
+    @classmethod
+    def _clean_existing(cls, values: list[str]) -> list[str]:
+        return [topic.strip() for topic in values if topic.strip()][:MAX_TOPICS]
+
+
+class SuggestedTopics(BaseModel):
+    """The model's answer, unparsed: topic names one per line.
+
+    Deliberately a single string rather than a list. The client splits it, and
+    nothing is stored, so a reply the model formats oddly costs a bad chip
+    rather than a failed request.
+    """
+
+    topics: str
+
+
 class SpaceSummary(BaseModel):
     """A space as a card sees it: never the topics themselves, just the count.
 

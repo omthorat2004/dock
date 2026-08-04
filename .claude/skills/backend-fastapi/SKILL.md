@@ -171,6 +171,10 @@ queried on their own:
 Space { user_id, lesson_name, topics[], created_at, updated_at }
   Topic { topic_name, youtube_links[], session }
     TopicSession { session_id, limit_reached, created_at, updated_at }
+
+`goal` and `level` are None on spaces created before they were asked for, so
+both are optional on the document and required only in `CreateSpaceRequest`.
+They are pushed into the learn-mode and video prompts, never just stored.
 ```
 
 - `lesson_name` is **not unique**. A student may re-share the same lesson when
@@ -178,11 +182,19 @@ Space { user_id, lesson_name, topics[], created_at, updated_at }
 - A topic's `session` starts empty — `session_id` is None until the student opens
   the card and chats, which is what `TopicSession.start()` is for. Its timestamps
   describe the chat, so they only begin when the chat does.
-- `POST /spaces` accepts topic **names** only (`{ lesson_name, topics: [str] }`,
-  both required). Videos and sessions are server-owned; a client cannot seed them.
-  The schema trims, drops blanks and collapses case-insensitive duplicates.
-- `GET /spaces` returns `SpaceSummary` — `{ id, lesson_name, topic_count,
-  created_at, updated_at }`, newest `updated_at` first. It never sends the topics:
+- `POST /spaces` accepts topic **names** only (`{ lesson_name, goal, level,
+  topics: [str] }`, all four required; `level` is one of beginner /
+  intermediate / advanced). Videos and sessions are server-owned; a client
+  cannot seed them. The schema trims, drops blanks and collapses
+  case-insensitive duplicates.
+- `POST /spaces/topic-suggestions` asks the caller's own model for
+  `SUGGESTED_TOPIC_COUNT` (5) topics from `{ lesson_name, goal, level, topics }`,
+  where `topics` is what the student has already picked so the model proposes
+  others. It reads and writes nothing, and returns the reply **unparsed**
+  (`{ topics: str }`, one name per line) — the client splits it, so a badly
+  formatted reply costs a bad chip rather than a 500.
+- `GET /spaces` returns `SpaceSummary` — `{ id, lesson_name, goal, level,
+  topic_count, created_at, updated_at }`, newest `updated_at` first. It never sends the topics:
   the count comes from Mongo via a `$size` projection, so listing twenty spaces
   does not drag twenty topic arrays (with their links and sessions) across the
   wire. Add fields to that projection rather than fetching whole documents.

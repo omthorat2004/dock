@@ -17,9 +17,12 @@ not a container in the product.
 
 | Term | Meaning |
 | --- | --- |
-| **Space** | Container for **one lesson**. Owns that lesson, its syllabus section, its topics and the canvas layout. |
+| **Space** | Container for **one lesson**. Owns that lesson, its syllabus section, the goal and level it is being revised at, its topics and the canvas layout. |
 | **Lesson** | The teaching content a space is built around. One lesson per space, shared when the space is created. |
 | **Syllabus** | The scope the lesson sits inside: the syllabus section and the depth expected. Shared alongside the lesson. |
+| **Goal** | What the student is revising this lesson for: Interview, Exam, or their own words. Asked when the space is created and required. |
+| **Level** | How deep to take it: beginner, intermediate or advanced. Asked alongside the goal and required. |
+| **Suggested topic** | A topic the model proposed in the create form. Offered as a chip to take or ignore; once added it is an ordinary topic and nothing records where it came from. |
 | **Topic** | A single thing to learn *within that lesson*, derived from the lesson and its syllabus section. |
 | **Topic card** | A topic as it appears on the canvas: title, syllabus reference, revision progress, video count. |
 | **Canvas** | The grid-backed surface a space opens as. Cards are positioned on it and the layout persists. |
@@ -37,6 +40,10 @@ User ──< Space (one lesson + its syllabus section)
              └──< Topic ──< ChatMessage
                        └──< Video
 ```
+
+The goal and level travel into every prompt the space makes: learn-mode chat
+answers at that level for that goal, and the video shelf searches for explainers
+pitched there. Capturing them and ignoring them would be worse than not asking.
 
 The lesson and its syllabus section define the topics. Chat and videos hang off a
 single topic — never off a space as a whole. That scoping is the whole point of the

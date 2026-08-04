@@ -1,7 +1,13 @@
 from fastapi import APIRouter, status
 
-from app.dependencies import CurrentUser, SpaceServiceDep
-from app.schemas.space import CreateSpaceRequest, SpaceDetail, SpaceSummary
+from app.dependencies import AIProviderDep, CurrentUser, SpaceServiceDep
+from app.schemas.space import (
+    CreateSpaceRequest,
+    SpaceDetail,
+    SpaceSummary,
+    SuggestedTopics,
+    SuggestTopicsRequest,
+)
 
 router = APIRouter(prefix="/spaces", tags=["spaces"])
 
@@ -38,6 +44,28 @@ async def list_spaces(
     return await service.list_spaces(user.id)
 
 
+@router.post(
+    "/topic-suggestions",
+    response_model=SuggestedTopics,
+    status_code=status.HTTP_200_OK,
+    summary="Ask the model which topics this lesson should cover",
+    description=(
+        "Runs on the caller's own AI key, before any space exists, so the "
+        "create form can offer topics instead of asking the student to think "
+        "of all of them. Returns the model's reply as it came: topic names, "
+        "one per line, for the client to split. Nothing is stored, and a "
+        "suggestion is an ordinary topic once it is added."
+    ),
+)
+async def suggest_topics(
+    payload: SuggestTopicsRequest,
+    user: CurrentUser,
+    provider: AIProviderDep,
+    service: SpaceServiceDep,
+) -> SuggestedTopics:
+    return SuggestedTopics(topics=await service.suggest_topics(provider, payload))
+
+
 @router.get(
     "/{space_id}",
     response_model=SpaceDetail,
@@ -54,3 +82,4 @@ async def get_space(
 ) -> SpaceDetail:
     space = await service.get_space(user.id, space_id)
     return SpaceDetail.model_validate(space, from_attributes=True)
+

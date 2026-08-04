@@ -69,11 +69,46 @@ export type CreateSpacePayload = {
   topics: string[];
 };
 
+export type SuggestTopicsPayload = {
+  lesson_name: string;
+  goal: string;
+  level: RevisionLevel;
+  /** Already picked, so the model proposes others instead of repeating them. */
+  topics: string[];
+};
+
+/**
+ * The model's topic names out of one reply. The server hands back what the
+ * model wrote, so the splitting and the tidying up happen here: one topic per
+ * line, minus any numbering or bullet the model added anyway.
+ */
+export function splitSuggestedTopics(reply: string): string[] {
+  const seen = new Set<string>();
+
+  return reply
+    .split(/\r?\n/)
+    .flatMap((line) => (line.includes(",") ? line.split(",") : [line]))
+    .map((line) => line.replace(/^\s*(?:[-*\u2022]|\d+[.)])\s*/, "").trim())
+    .filter((topic) => {
+      if (!topic || topic.length > 200 || seen.has(topic.toLowerCase())) return false;
+      seen.add(topic.toLowerCase());
+      return true;
+    });
+}
+
 /** Every call to the FastAPI spaces routes lives here, one place per endpoint. */
 export const spacesApi = {
   async create(payload: CreateSpacePayload): Promise<SpaceSummary> {
     const { data } = await api.post<SpaceSummary>("/spaces", payload);
     return data;
+  },
+
+  async suggestTopics(payload: SuggestTopicsPayload): Promise<string[]> {
+    const { data } = await api.post<{ topics: string }>(
+      "/spaces/topic-suggestions",
+      payload,
+    );
+    return splitSuggestedTopics(data.topics);
   },
 
   async list(): Promise<SpaceSummary[]> {

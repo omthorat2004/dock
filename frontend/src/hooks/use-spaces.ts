@@ -6,6 +6,7 @@ import {
   type CreateSpacePayload,
   type SpaceDetail,
   type SpaceSummary,
+  type SuggestTopicsPayload,
   spacesApi,
 } from "@/lib/space-api";
 
@@ -32,6 +33,17 @@ export function useSpaces() {
   return useQuery<SpaceSummary[], ApiError>({
     queryKey: spaceKeys.list,
     queryFn: () => spacesApi.list(),
+  });
+}
+
+/**
+ * Topics the model suggests for a lesson, asked for from the create form.
+ * A mutation rather than a query: it costs a model call, so it runs when the
+ * student presses the button and never on its own.
+ */
+export function useSuggestTopics() {
+  return useMutation<string[], ApiError, SuggestTopicsPayload>({
+    mutationFn: (payload) => spacesApi.suggestTopics(payload),
   });
 }
 
