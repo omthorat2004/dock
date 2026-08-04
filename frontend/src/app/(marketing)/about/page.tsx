@@ -38,17 +38,32 @@ const timeline = [
   {
     phase: "Shipped",
     title: "Learn mode and videos",
-    body: "Per-card chat grounded in your material, on your own model key, plus the video shelf matched to that one topic.",
+    body: "Per-card chat grounded in your material, plus the video shelf matched to that one topic. Both run on your own model key, which is encrypted before it is stored and never shown back.",
+  },
+  {
+    phase: "Shipped",
+    title: "Pitched at what you are revising for",
+    body: "Every space asks what it is for (an interview, an exam, or your own words) and how far along you are. Both answers travel into every explanation and every video search, so the same lesson reads differently for a beginner and for someone the night before a final.",
+  },
+  {
+    phase: "Shipped",
+    title: "Topics you do not have to think of",
+    body: "Stuck on what a lesson covers? Ask, and five topics come back as suggestions you can take or ignore, either while you create the space or later from the canvas when you find a gap. Ask again for five more.",
   },
   {
     phase: "Now",
-    title: "Topics that read themselves",
-    body: "Topics pulled out of the lesson text instead of typed in by hand, a layout that stays where you put it, and revision progress that means something.",
+    title: "A roadmap you can edit",
+    body: "A card on the space that lays out what to cover and in what order, yours to rewrite. A plan made in week one never survives contact with the term, so this one is meant to be edited rather than followed.",
   },
   {
-    phase: "Next",
+    phase: "Now",
+    title: "A canvas that remembers",
+    body: "A layout that stays exactly where you dragged it, and revision progress that reflects what you have actually worked through instead of sitting at zero.",
+  },
+  {
+    phase: "Later",
     title: "Take the space with you",
-    body: "Export a space to PDF for the night before, and turn the lesson text into a condensed revision sheet you can read in one sitting.",
+    body: "Further out: export a space to PDF for the night before, and turn a lesson into a condensed revision sheet you can read in one sitting.",
   },
 ];
 
