@@ -115,10 +115,27 @@ Two jobs, two algorithms — do not mix them up:
 Both verifications are constant-time. Never bcrypt an opaque token; never SHA-256 a
 password.
 
-A user's **AI provider API key is the exception**: we have to replay it to the
-vendor, so it cannot be hashed (hashing is one-way). It lives on the user document
-as `api_key`, must be **encrypted at rest** before production, and is never
-returned to the client — only whether one is set (`has_api_key`).
+## Encryption (`core/crypto.py`)
+
+A user's **AI provider API key is the exception to hashing**: we have to replay it
+to the vendor, so it cannot be one-way. It is **AES-256-GCM encrypted at rest** and
+lives on the user document as `api_key_encrypted` — never as plaintext.
+
+- The 256-bit key is derived from `secret_key` with HKDF under its own info label,
+  so it is not the bytes that sign tokens. No extra environment variable exists;
+  rotating `SECRET_KEY` orphans stored provider keys, and users re-enter them.
+- Every value is bound to its owner's id as GCM associated data, so a ciphertext
+  copied into another user's document decrypts to nothing.
+- `decrypt_secret` returns `None` rather than raising: an empty field, a legacy
+  plaintext value and an unreadable one all mean "ask the user for their key".
+  `User.has_api_key` follows *decryptability*, not presence, so the UI never shows
+  "configured" for a key the server cannot use.
+- The plaintext exists only inside `build_provider`, at the point the SDK is
+  constructed. Nothing else reads `User.api_key_encrypted` directly; callers go
+  through `User.provider_api_key`.
+- The key is never returned to the client — only whether one is set
+  (`has_api_key`). `scripts/encrypt_api_keys.py` is the one-shot migration that
+  converted the pre-encryption plaintext column; it is idempotent.
 
 ## Auth: access + refresh
 

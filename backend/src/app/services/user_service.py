@@ -1,6 +1,7 @@
 from pymongo.asynchronous.database import AsyncDatabase
 
 from app.core.constants import DEFAULT_MODEL_NAME
+from app.core.crypto import encrypt_secret
 from app.core.exceptions import NotFoundError
 from app.dao.user_dao import UserDAO
 
@@ -20,13 +21,16 @@ class UserService:
     ) -> None:
         """Store the caller's provider API key and chosen model.
 
+        The key is encrypted here, bound to its owner, so nothing below this
+        line ever holds it in the clear and the DAO writes only ciphertext.
+
         The provider family (`model_name`) is still defaulted to Gemini; only
         the model version is user-chosen for now. When more providers land, the
         family is derived from the model instead of hard-defaulted here.
         """
         updated = await self.users.set_provider_config(
             user_id,
-            api_key=api_key,
+            api_key_encrypted=encrypt_secret(api_key, context=user_id),
             model_name=DEFAULT_MODEL_NAME,
             model_version=model_version,
         )

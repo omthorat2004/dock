@@ -50,9 +50,7 @@ class ChatMessageDAO(BaseDAO):
         messages.reverse()
         return messages
 
-    async def slice(
-        self, session_id: str, skip: int, limit: int
-    ) -> list[ChatMessage]:
+    async def slice(self, session_id: str, skip: int, limit: int) -> list[ChatMessage]:
         """A window of the transcript from the start, oldest-first.
 
         This is what the rolling summary folds in: the messages that have aged

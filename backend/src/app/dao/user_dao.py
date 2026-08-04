@@ -24,20 +24,35 @@ class UserDAO(BaseDAO):
         self,
         user_id: str,
         *,
-        api_key: str,
+        api_key_encrypted: str,
         model_name: str,
         model_version: str,
     ) -> bool:
-        """Store the user's AI provider key and model choice. False if no such user."""
-        return await self.update_by_id(
-            user_id,
+        """Store the user's encrypted provider key and model choice.
+
+        The key arrives already encrypted; encrypting it is a rule, so it
+        belongs to the service. False if there is no such user.
+
+        `$unset` drops the plaintext `api_key` field that predates encryption,
+        so a user who saves a key is migrated by the act of saving it.
+        """
+        result = await self.collection.update_one(
+            {"_id": user_id},
             {
-                "api_key": api_key,
-                "model_name": model_name,
-                "model_version": model_version,
+                "$set": {
+                    "api_key_encrypted": api_key_encrypted,
+                    "model_name": model_name,
+                    "model_version": model_version,
+                },
+                "$unset": {"api_key": ""},
             },
         )
+        return result.matched_count > 0
 
     async def clear_api_key(self, user_id: str) -> bool:
         """Drop the stored provider key. Model choice is left in place."""
-        return await self.update_by_id(user_id, {"api_key": None})
+        result = await self.collection.update_one(
+            {"_id": user_id},
+            {"$set": {"api_key_encrypted": None}, "$unset": {"api_key": ""}},
+        )
+        return result.matched_count > 0

@@ -26,8 +26,6 @@ async def set_api_key(
     status_code=status.HTTP_200_OK,
     summary="Remove the caller's AI provider API key",
 )
-async def remove_api_key(
-    user: CurrentUser, service: UserServiceDep
-) -> MessageResponse:
+async def remove_api_key(user: CurrentUser, service: UserServiceDep) -> MessageResponse:
     await service.remove_api_key(user.id)
     return MessageResponse(message="API key removed.")

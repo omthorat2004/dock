@@ -93,7 +93,7 @@ async def get_ai_provider(user: CurrentUser) -> AIProvider:
     Routes that need the model depend on this instead of re-checking the key, so
     the "no key configured" answer is one exception raised in one place.
     """
-    if not user.api_key:
+    if not user.has_api_key:
         raise ApiKeyNotConfigured
     return build_provider(user)
 

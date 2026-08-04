@@ -105,9 +105,7 @@ class ContextLimitReached(AppError):
 
     status_code = 413
     code = "token_limit_reached"
-    message = (
-        "Token limit reached for this session. Start a new session to continue."
-    )
+    message = "Token limit reached for this session. Start a new session to continue."
 
 
 class VideoLimitReached(ConflictError):

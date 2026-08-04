@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     # Auth cookies. In development the frontend is on localhost:3000 and the API
     # on localhost:8000: different origins, but the same site, so `lax` works
     # and `secure` can stay off over plain http.
-    cookie_secure: bool 
+    cookie_secure: bool
     cookie_samesite: Literal["lax", "strict", "none"] = "lax"
     cookie_domain: str | None = None
 

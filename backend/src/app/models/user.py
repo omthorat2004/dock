@@ -4,6 +4,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.core.constants import DEFAULT_MODEL_NAME, DEFAULT_MODEL_VERSION
+from app.core.crypto import decrypt_secret
 
 COLLECTION = "users"
 
@@ -29,18 +30,33 @@ class User(BaseModel):
     created_at: datetime = Field(default_factory=utcnow)
 
     # AI provider config. `model_name` selects the provider, so the key stays
-    # provider-agnostic: one `api_key`, not `gemini_api_key`. The key is stored
-    # because we must replay it to the vendor, so unlike the refresh token it
-    # cannot be hashed; it must be encrypted at rest before production. None
-    # until the user configures it.
-    api_key: str | None = None
+    # provider-agnostic: one key field, not `gemini_api_key`. The key must be
+    # replayed to the vendor on every call, so unlike a refresh token it cannot
+    # be hashed; it is AES-256-GCM encrypted instead (`core.crypto`) and only
+    # ever leaves this model through `provider_api_key`. None until the user
+    # configures it.
+    api_key_encrypted: str | None = None
     model_name: str = DEFAULT_MODEL_NAME
     model_version: str = DEFAULT_MODEL_VERSION
 
     @property
+    def provider_api_key(self) -> str | None:
+        """The decrypted provider key, for the vendor call. None if unreadable.
+
+        Bound to this user's id, so a ciphertext copied from another user's
+        document decrypts to nothing rather than to their key.
+        """
+        return decrypt_secret(self.api_key_encrypted, context=self.id)
+
+    @property
     def has_api_key(self) -> bool:
-        """Whether a provider key is configured. Safe to expose; the key is not."""
-        return bool(self.api_key)
+        """Whether a *usable* provider key is configured. Safe to expose.
+
+        Decryptability rather than presence: a stored value this deployment
+        cannot read (written under an older `SECRET_KEY`, say) would otherwise
+        show as configured in the UI while every model call answered 401.
+        """
+        return self.provider_api_key is not None
 
     @classmethod
     def from_document(cls, document: dict[str, Any]) -> "User":

@@ -1,7 +1,7 @@
 [project]
 name = "app"
 version = "0.1.0"
-description = "Dock API — syllabus-aware revision spaces."
+description = "Dock API: syllabus-aware revision spaces."
 authors = [
     {name = "omthorat2004",email = "omthorat1005@gmail.com"}
 ]
@@ -14,14 +14,15 @@ dependencies = [
     "bcrypt (>=5.0.0,<6.0.0)",
     "email-validator (>=2.3.0,<3.0.0)",
     "pymongo (>=4.9)",
-    "google-genai (>=2.14.0,<3.0.0)"
+    "google-genai (>=2.14.0,<3.0.0)",
+    "cryptography (>=50.0.0,<51.0.0)"
 ]
 
 [tool.poetry]
 packages = [{include = "app", from = "src"}]
 
-# Vercel's FastAPI detection otherwise finds three `app` variables — the real
-# one plus the two the test helpers import — and refuses to guess.
+# Vercel's FastAPI detection otherwise finds three `app` variables (the real
+# one plus the two the test helpers import) and refuses to guess.
 [tool.vercel]
 entrypoint = "src.app.main:app"
 

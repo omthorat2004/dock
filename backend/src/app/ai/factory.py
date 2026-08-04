@@ -12,13 +12,16 @@ def build_provider(user: User) -> AIProvider:
     new `case` here plus a subclass of `AIProvider`.
 
     The api-key check is also done by the `AIProviderDep` dependency, but this
-    guards again so the factory is safe to call on its own.
+    guards again so the factory is safe to call on its own. The key is
+    decrypted here, at the point it is handed to the SDK, and a stored value
+    this deployment cannot read counts as no key at all.
     """
-    if not user.api_key:
+    api_key = user.provider_api_key
+    if not api_key:
         raise ApiKeyNotConfigured
 
     match user.model_name:
         case "gemini":
-            return GeminiProvider(user.api_key, user.model_version)
+            return GeminiProvider(api_key, user.model_version)
         case other:
             raise UnsupportedProvider(f"No provider is configured for '{other}'.")

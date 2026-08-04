@@ -21,6 +21,11 @@ syllabus section, with the lesson's topics laid out as cards on a grid canvas.
   directly through the axios instance in `lib/axios.config.ts`.
 - **The backend owns the session.** It sets httpOnly cookies; the frontend stores
   nothing: no `localStorage`, no token in JS.
+- **A provider key is never stored in plaintext.** It cannot be hashed (it goes to
+  the vendor on every call), so it is AES-256-GCM encrypted in `core/crypto.py`,
+  bound to its owner's id, and stored as `api_key_encrypted`. Only
+  `build_provider` sees the plaintext, and the API returns `has_api_key`, never
+  the key.
 - **No file uploads.** No PDFs, slides or attachments. Lessons and syllabus come in
   as text. Also out of scope: assignments, grading, collaboration, payments.
 - **Spaces are lesson-scoped**, never subject- or course-scoped.
