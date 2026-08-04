@@ -111,6 +111,22 @@ export const spacesApi = {
     return splitSuggestedTopics(data.topics);
   },
 
+  async addTopics(spaceId: string, topics: string[]): Promise<SpaceDetail> {
+    const { data } = await api.post<SpaceDetail>(`/spaces/${spaceId}/topics`, {
+      topics,
+    });
+    return data;
+  },
+
+  async suggestMoreTopics(spaceId: string): Promise<string[]> {
+    // No body: the space already holds the lesson, goal, level and what is on
+    // the canvas, so the server reads all of it rather than being told twice.
+    const { data } = await api.post<{ topics: string }>(
+      `/spaces/${spaceId}/topic-suggestions`,
+    );
+    return splitSuggestedTopics(data.topics);
+  },
+
   async list(): Promise<SpaceSummary[]> {
     const { data } = await api.get<SpaceSummary[]>("/spaces");
     return data;

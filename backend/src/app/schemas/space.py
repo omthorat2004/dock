@@ -8,6 +8,29 @@ MAX_TOPICS = 50
 MAX_TOPIC_LENGTH = 200
 
 
+def clean_topic_names(values: list[str]) -> list[str]:
+    """Trim, drop blanks, and collapse case-insensitive duplicates.
+
+    The same rules the create-space modal applies client-side, enforced again
+    here because the API is reachable without it.
+    """
+    seen: set[str] = set()
+    cleaned: list[str] = []
+
+    for value in values:
+        topic = value.strip()
+        if not topic or topic.lower() in seen:
+            continue
+        if len(topic) > MAX_TOPIC_LENGTH:
+            raise ValueError(f"Keep each topic under {MAX_TOPIC_LENGTH} characters.")
+        seen.add(topic.lower())
+        cleaned.append(topic)
+
+    if not cleaned:
+        raise ValueError("Add at least one topic.")
+    return cleaned
+
+
 class CreateSpaceRequest(BaseModel):
     """A new space: the lesson, what it is being revised for, and its topics.
 
@@ -39,28 +62,18 @@ class CreateSpaceRequest(BaseModel):
     @field_validator("topics")
     @classmethod
     def _clean_topics(cls, values: list[str]) -> list[str]:
-        """Trim, drop blanks, and collapse case-insensitive duplicates.
+        return clean_topic_names(values)
 
-        The same rules the create-space modal applies client-side, enforced
-        again here because the API is reachable without it.
-        """
-        seen: set[str] = set()
-        cleaned: list[str] = []
 
-        for value in values:
-            topic = value.strip()
-            if not topic or topic.lower() in seen:
-                continue
-            if len(topic) > MAX_TOPIC_LENGTH:
-                raise ValueError(
-                    f"Keep each topic under {MAX_TOPIC_LENGTH} characters."
-                )
-            seen.add(topic.lower())
-            cleaned.append(topic)
+class AddTopicsRequest(BaseModel):
+    """More topics for a space that already exists. Names only, as on create."""
 
-        if not cleaned:
-            raise ValueError("Add at least one topic.")
-        return cleaned
+    topics: list[str] = Field(min_length=1, max_length=MAX_TOPICS)
+
+    @field_validator("topics")
+    @classmethod
+    def _clean_topics(cls, values: list[str]) -> list[str]:
+        return clean_topic_names(values)
 
 
 class SuggestTopicsRequest(BaseModel):

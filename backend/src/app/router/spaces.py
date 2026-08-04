@@ -2,6 +2,7 @@ from fastapi import APIRouter, status
 
 from app.dependencies import AIProviderDep, CurrentUser, SpaceServiceDep
 from app.schemas.space import (
+    AddTopicsRequest,
     CreateSpaceRequest,
     SpaceDetail,
     SpaceSummary,
@@ -82,4 +83,49 @@ async def get_space(
 ) -> SpaceDetail:
     space = await service.get_space(user.id, space_id)
     return SpaceDetail.model_validate(space, from_attributes=True)
+
+
+@router.post(
+    "/{space_id}/topics",
+    response_model=SpaceDetail,
+    status_code=status.HTTP_200_OK,
+    summary="Add topics to a space that already exists",
+    description=(
+        "Puts more cards on the canvas. Names the space already holds are "
+        "skipped rather than refused, so adding four topics when one is "
+        "already there adds the other three. Returns the space in full, which "
+        "is what the canvas re-renders from. 409 `topic_limit_reached` once "
+        "the space is at its limit."
+    ),
+)
+async def add_topics(
+    space_id: str,
+    payload: AddTopicsRequest,
+    user: CurrentUser,
+    service: SpaceServiceDep,
+) -> SpaceDetail:
+    space = await service.add_topics(user.id, space_id, payload.topics)
+    return SpaceDetail.model_validate(space, from_attributes=True)
+
+
+@router.post(
+    "/{space_id}/topic-suggestions",
+    response_model=SuggestedTopics,
+    status_code=status.HTTP_200_OK,
+    summary="Ask the model for more topics for an existing space",
+    description=(
+        "The same ask as at create time, with nothing to fill in: the lesson, "
+        "the goal, the level and the topics already on the canvas all come "
+        "off the space. Returns the reply as the model wrote it, one name per "
+        "line, for the client to split."
+    ),
+)
+async def suggest_more_topics(
+    space_id: str,
+    user: CurrentUser,
+    provider: AIProviderDep,
+    service: SpaceServiceDep,
+) -> SuggestedTopics:
+    reply = await service.suggest_topics_for_space(provider, user.id, space_id)
+    return SuggestedTopics(topics=reply)
 

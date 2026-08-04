@@ -47,6 +47,30 @@ export function useSuggestTopics() {
   });
 }
 
+/** More topics for a space that already exists, from the model. */
+export function useSuggestMoreTopics(spaceId: string) {
+  return useMutation<string[], ApiError, void>({
+    mutationFn: () => spacesApi.suggestMoreTopics(spaceId),
+  });
+}
+
+/**
+ * Add topics to an open space. The reply is the space in full, so it replaces
+ * the detail cache outright and the canvas draws the new cards without a
+ * refetch; the list is invalidated because a card shows the topic count.
+ */
+export function useAddTopics(spaceId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation<SpaceDetail, ApiError, string[]>({
+    mutationFn: (topics) => spacesApi.addTopics(spaceId, topics),
+    onSuccess: (space) => {
+      queryClient.setQueryData(spaceKeys.detail(spaceId), space);
+      queryClient.invalidateQueries({ queryKey: spaceKeys.list });
+    },
+  });
+}
+
 export function useCreateSpace() {
   const queryClient = useQueryClient();
 

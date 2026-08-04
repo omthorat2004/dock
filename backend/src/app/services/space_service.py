@@ -1,11 +1,16 @@
 from pymongo.asynchronous.database import AsyncDatabase
 
 from app.ai.base import AIProvider
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import NotFoundError, TopicLimitReached
 from app.dao.space_dao import SpaceDAO
 from app.models.space import Space, Topic
 from app.models.user import utcnow
-from app.schemas.space import CreateSpaceRequest, SpaceSummary, SuggestTopicsRequest
+from app.schemas.space import (
+    MAX_TOPICS,
+    CreateSpaceRequest,
+    SpaceSummary,
+    SuggestTopicsRequest,
+)
 
 SUGGESTED_TOPIC_COUNT = 5
 
@@ -82,6 +87,44 @@ class SpaceService:
                 f"them:\n{have}"
             )
         return await provider.chat(prompt)
+
+    async def suggest_topics_for_space(
+        self, provider: AIProvider, user_id: str, space_id: str
+    ) -> str:
+        """The same ask, for a space that already exists.
+
+        Nothing is asked of the student here: the lesson, goal, level and the
+        topics already on the canvas all come off the space itself, which is
+        also why a space created before goals existed still works.
+        """
+        space = await self.get_space(user_id, space_id)
+        payload = SuggestTopicsRequest(
+            lesson_name=space.lesson_name,
+            goal=space.goal or "revision",
+            level=space.level or "intermediate",
+            topics=[topic.topic_name for topic in space.topics],
+        )
+        return await self.suggest_topics(provider, payload)
+
+    async def add_topics(self, user_id: str, space_id: str, names: list[str]) -> Space:
+        """Put more topic cards on an existing space.
+
+        Names already on the space are dropped rather than refused: a student
+        adding four topics, one of which they already have, means to add the
+        other three.
+        """
+        space = await self.get_space(user_id, space_id)
+        existing = {topic.topic_name.lower() for topic in space.topics}
+        fresh = [name for name in names if name.lower() not in existing]
+
+        if not fresh:
+            return space
+        if len(space.topics) + len(fresh) > MAX_TOPICS:
+            raise TopicLimitReached
+
+        space.topics.extend(Topic(topic_name=name) for name in fresh)
+        await self.save_topics(space)
+        return space
 
     async def list_spaces(self, user_id: str) -> list[SpaceSummary]:
         """The caller's spaces, as cards: lesson, topic count, timestamps."""

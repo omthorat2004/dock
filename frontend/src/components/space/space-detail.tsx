@@ -3,11 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useSpace } from "@/hooks/use-spaces";
+import { AddTopicsModal } from "@/components/space/add-topics-modal";
 import { CanvasNode, SpaceCanvas } from "@/components/space/space-canvas";
 import { LearnPanel } from "@/components/space/learn-panel";
 import { LessonNode } from "@/components/space/lesson-node";
 import { TopicCard } from "@/components/space/topic-card";
 import { VideoPanel } from "@/components/space/video-panel";
+import { buttonStyles } from "@/components/ui/button";
 import { LEVEL_LABELS } from "@/lib/space-api";
 import { topicPosition } from "@/lib/topic-layout";
 
@@ -29,6 +31,7 @@ type OpenPanel = { topicId: string; mode: "chat" | "videos" };
 export function SpaceDetail({ spaceId }: { spaceId: string }) {
   const { data: space, isPending, error } = useSpace(spaceId);
   const [panel, setPanel] = useState<OpenPanel | null>(null);
+  const [addingTopics, setAddingTopics] = useState(false);
 
   if (isPending) return <SpaceShimmer />;
 
@@ -73,10 +76,29 @@ export function SpaceDetail({ spaceId }: { spaceId: string }) {
             </p>
           ) : null}
         </div>
-        <p className="hidden shrink-0 font-mono text-xs text-muted sm:block">
-          {space.topics.length} topics
-        </p>
+        <div className="flex shrink-0 items-center gap-3">
+          <p className="hidden font-mono text-xs text-muted sm:block">
+            {space.topics.length} topics
+          </p>
+          <button
+            type="button"
+            onClick={() => setAddingTopics(true)}
+            className={buttonStyles("secondary", "px-3 py-1.5 text-xs")}
+          >
+            Add topics
+          </button>
+        </div>
       </div>
+
+      {/* Mounted only while open, so the form resets on every close. */}
+      {addingTopics ? (
+        <AddTopicsModal
+          spaceId={space.id}
+          open
+          onClose={() => setAddingTopics(false)}
+          existing={space.topics.map((topic) => topic.topic_name)}
+        />
+      ) : null}
 
       <div className="flex min-h-0 flex-1">
         <SpaceCanvas className="flex-1">

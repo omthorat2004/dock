@@ -193,6 +193,12 @@ They are pushed into the learn-mode and video prompts, never just stored.
   others. It reads and writes nothing, and returns the reply **unparsed**
   (`{ topics: str }`, one name per line) — the client splits it, so a badly
   formatted reply costs a bad chip rather than a 500.
+- `POST /spaces/{id}/topics` adds cards to a space that exists (`{ topics:
+  [str] }`). Names it already holds are skipped, not refused; it returns the
+  whole `SpaceDetail` so the canvas re-renders without a follow-up fetch, and
+  409 `topic_limit_reached` at `MAX_TOPICS`. Its sibling
+  `POST /spaces/{id}/topic-suggestions` takes **no body**: the lesson, goal,
+  level and current topics all come off the space.
 - `GET /spaces` returns `SpaceSummary` — `{ id, lesson_name, goal, level,
   topic_count, created_at, updated_at }`, newest `updated_at` first. It never sends the topics:
   the count comes from Mongo via a `$size` projection, so listing twenty spaces

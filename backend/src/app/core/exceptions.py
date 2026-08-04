@@ -115,6 +115,13 @@ class VideoLimitReached(ConflictError):
     message = "This topic already holds every video it can."
 
 
+class TopicLimitReached(ConflictError):
+    """The space already holds every topic it can; see `MAX_TOPICS`."""
+
+    code = "topic_limit_reached"
+    message = "This space already holds every topic it can."
+
+
 class YoutubeUnavailable(AppError):
     """YouTube search cannot be reached: no key configured, or it is down.
 
