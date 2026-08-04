@@ -2,18 +2,22 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field, field_validator
 
+from app.models.space import MAX_GOAL_LENGTH, RevisionLevel
+
 MAX_TOPICS = 50
 MAX_TOPIC_LENGTH = 200
 
 
 class CreateSpaceRequest(BaseModel):
-    """A new space: the lesson, and the topics it covers.
+    """A new space: the lesson, what it is being revised for, and its topics.
 
     Only topic *names* are accepted. The youtube links and the chat session on
     each topic are server-owned; a client cannot seed them.
     """
 
     lesson_name: str = Field(min_length=1, max_length=200)
+    goal: str = Field(min_length=1, max_length=MAX_GOAL_LENGTH)
+    level: RevisionLevel
     topics: list[str] = Field(min_length=1, max_length=MAX_TOPICS)
 
     @field_validator("lesson_name")
@@ -22,6 +26,14 @@ class CreateSpaceRequest(BaseModel):
         cleaned = value.strip()
         if not cleaned:
             raise ValueError("Give the lesson a name.")
+        return cleaned
+
+    @field_validator("goal")
+    @classmethod
+    def _clean_goal(cls, value: str) -> str:
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("Say what you are revising this for.")
         return cleaned
 
     @field_validator("topics")
@@ -60,6 +72,8 @@ class SpaceSummary(BaseModel):
 
     id: str
     lesson_name: str
+    goal: str | None = None
+    level: RevisionLevel | None = None
     topic_count: int
     created_at: datetime
     updated_at: datetime
@@ -109,6 +123,8 @@ class SpaceDetail(BaseModel):
 
     id: str
     lesson_name: str
+    goal: str | None = None
+    level: RevisionLevel | None = None
     topics: list[TopicRead]
     created_at: datetime
     updated_at: datetime

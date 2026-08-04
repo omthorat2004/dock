@@ -19,6 +19,8 @@ from tests.test_auth import register
 SPACES = "/api/v1/spaces"
 LESSON = {
     "lesson_name": "Photosynthesis",
+    "goal": "Exam",
+    "level": "intermediate",
     "topics": ["Light reactions", "Calvin cycle"],
 }
 

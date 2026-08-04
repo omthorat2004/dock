@@ -20,6 +20,8 @@ def test_space_detail_returns_the_topics_the_list_withholds(client):
 
     body = response.json()
     assert body["lesson_name"] == "Photosynthesis"
+    assert body["goal"] == "Exam"
+    assert body["level"] == "intermediate"
     assert [topic["topic_name"] for topic in body["topics"]] == [
         "Light reactions",
         "Calvin cycle",
@@ -94,7 +96,11 @@ def test_topics_stored_without_ids_are_backfilled_once(client):
         )
     space_id = str(result.inserted_id)
 
-    first = [t["id"] for t in client.get(f"{SPACES}/{space_id}").json()["topics"]]
+    body = client.get(f"{SPACES}/{space_id}").json()
+    # A space created before the goal was asked for still loads, without one.
+    assert body["goal"] is None and body["level"] is None
+
+    first = [t["id"] for t in body["topics"]]
     second = [t["id"] for t in client.get(f"{SPACES}/{space_id}").json()["topics"]]
 
     assert first == second

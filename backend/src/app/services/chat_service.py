@@ -31,6 +31,21 @@ _TUTOR_FRAME = (
     "Be plain and concrete. Short paragraphs. No preamble and no flattery."
 )
 
+_LEVEL_GUIDANCE = {
+    "beginner": (
+        "Assume no background. Define the terms you use, work through the "
+        "basics before anything clever, and check understanding as you go."
+    ),
+    "intermediate": (
+        "Assume the basics are known. Skip the definitions, spend the time on "
+        "how the pieces fit together and on where students usually slip."
+    ),
+    "advanced": (
+        "Assume fluency. Go to the edge cases, the trade-offs and the harder "
+        "questions they are likely to be asked, and do not re-teach the basics."
+    ),
+}
+
 _SUMMARY_FRAME = (
     "Summarise this stretch of a tutoring conversation so it can stand in for "
     "the messages themselves later.\n"
@@ -45,9 +60,19 @@ def _render(messages: list[ChatMessage]) -> str:
     return "\n".join(f"{message.role}: {message.content}" for message in messages)
 
 
+def _scope(space: Space, topic: Topic) -> str:
+    lines = [f"Lesson: {space.lesson_name}", f"Topic: {topic.topic_name}"]
+    if space.goal:
+        lines.append(f"Revising for: {space.goal}")
+    if space.level:
+        lines.append(f"Student's level: {space.level}")
+        lines.append(_LEVEL_GUIDANCE[space.level])
+    return "\n".join(lines)
+
+
 def _build_prompt(
-    lesson_name: str,
-    topic_name: str,
+    space: Space,
+    topic: Topic,
     summary: ChatSummary | None,
     recent: list[ChatMessage],
     message: str,
@@ -55,7 +80,7 @@ def _build_prompt(
     """Frame + scope + summary + recent window + the new message, in that order."""
     parts = [
         _TUTOR_FRAME,
-        f"Lesson: {lesson_name}\nTopic: {topic_name}",
+        _scope(space, topic),
     ]
     if summary is not None:
         parts.append(f"Earlier in this conversation:\n{summary.content}")
@@ -119,9 +144,7 @@ class ChatService:
 
         summary = await self.summaries.get(session_id)
         recent = await self.messages.recent(session_id, RECENT_MESSAGE_WINDOW)
-        prompt = _build_prompt(
-            space.lesson_name, topic.topic_name, summary, recent, message
-        )
+        prompt = _build_prompt(space, topic, summary, recent, message)
 
         try:
             reply_text = await provider.chat(prompt)

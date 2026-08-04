@@ -36,9 +36,9 @@ export function CreateSpaceButton({ className = "" }: { className?: string }) {
           onClose={close}
           submitting={createSpace.isPending}
           error={createSpace.error?.message}
-          onCreate={({ lesson, syllabus }) =>
+          onCreate={({ lesson, goal, level, syllabus }) =>
             createSpace.mutate(
-              { lesson_name: lesson, topics: syllabus },
+              { lesson_name: lesson, goal, level, topics: syllabus },
               { onSuccess: () => setOpen(false) },
             )
           }

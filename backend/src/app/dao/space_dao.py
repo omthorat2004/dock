@@ -72,6 +72,8 @@ class SpaceDAO(BaseDAO):
             {"user_id": user_id},
             {
                 "lesson_name": 1,
+                "goal": 1,
+                "level": 1,
                 "created_at": 1,
                 "updated_at": 1,
                 "topic_count": {"$size": "$topics"},

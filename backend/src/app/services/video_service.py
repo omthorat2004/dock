@@ -29,6 +29,7 @@ from app.core.youtube import (
 from app.models.space import (
     MAX_YOUTUBE_LINKS,
     YOUTUBE_LINKS_PER_REQUEST,
+    Space,
     Topic,
     YoutubeLink,
 )
@@ -108,10 +109,28 @@ _VIDEO_FRAME = (
 )
 
 
-def _build_prompt(lesson_name: str, topic: Topic, wanted: int) -> str:
+_LEVEL_GUIDANCE = {
+    "beginner": "Pick explainers that start from scratch and assume nothing.",
+    "intermediate": (
+        "Pick explainers that go past the definitions into how it works, not "
+        "introductions."
+    ),
+    "advanced": (
+        "Pick in-depth explainers, worked problems and edge cases over introductions."
+    ),
+}
+
+
+def _build_prompt(space: Space, topic: Topic, wanted: int) -> str:
+    scope = [f"Lesson: {space.lesson_name}", f"Topic: {topic.topic_name}"]
+    if space.goal:
+        scope.append(f"The student is revising for: {space.goal}")
+    if space.level:
+        scope.append(f"Their level: {space.level}. {_LEVEL_GUIDANCE[space.level]}")
+
     parts = [
         _VIDEO_FRAME,
-        f"Lesson: {lesson_name}\nTopic: {topic.topic_name}",
+        "\n".join(scope),
         f"Choose {wanted} videos.",
     ]
     if topic.youtube_links:
@@ -260,7 +279,7 @@ class VideoService:
             }
 
         reply = await provider.chat_with_tools(
-            _build_prompt(space.lesson_name, topic, wanted),
+            _build_prompt(space, topic, wanted),
             [SEARCH_TOOL],
             run_tool,
         )

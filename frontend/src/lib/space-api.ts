@@ -1,5 +1,14 @@
 import { api } from "@/lib/axios.config";
 
+/** How deep the student wants the lesson taken, chosen when the space is made. */
+export type RevisionLevel = "beginner" | "intermediate" | "advanced";
+
+export const LEVEL_LABELS: Record<RevisionLevel, string> = {
+  beginner: "Beginner",
+  intermediate: "Intermediate",
+  advanced: "Advanced",
+};
+
 /**
  * A space as a card shows it. The list endpoint never sends the topics
  * themselves, only how many there are, so this is the whole shape.
@@ -7,6 +16,8 @@ import { api } from "@/lib/axios.config";
 export type SpaceSummary = {
   id: string;
   lesson_name: string;
+  goal: string | null;
+  level: RevisionLevel | null;
   topic_count: number;
   created_at: string;
   updated_at: string;
@@ -42,6 +53,8 @@ export type Topic = {
 export type SpaceDetail = {
   id: string;
   lesson_name: string;
+  goal: string | null;
+  level: RevisionLevel | null;
   topics: Topic[];
   created_at: string;
   updated_at: string;
@@ -49,6 +62,9 @@ export type SpaceDetail = {
 
 export type CreateSpacePayload = {
   lesson_name: string;
+  /** What the student is revising for: "Interview", "Exam", or their own words. */
+  goal: string;
+  level: RevisionLevel;
   /** Topic names only. Videos and the chat session are server-owned. */
   topics: string[];
 };

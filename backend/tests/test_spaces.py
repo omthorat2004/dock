@@ -6,8 +6,14 @@ from tests.test_auth import register
 ENDPOINT = "/api/v1/spaces"
 LESSON = {
     "lesson_name": "Photosynthesis",
+    "goal": "Exam",
+    "level": "intermediate",
     "topics": ["Light reactions", "Calvin cycle"],
 }
+
+
+def _without(payload: dict, field: str) -> dict:
+    return {key: value for key, value in payload.items() if key != field}
 
 
 def stored_spaces() -> list[dict]:
@@ -32,6 +38,8 @@ def test_a_signed_in_user_can_create_a_space(client):
 
     body = response.json()
     assert body["lesson_name"] == "Photosynthesis"
+    assert body["goal"] == "Exam"
+    assert body["level"] == "intermediate"
     assert body["topic_count"] == 2
     assert body["id"]
     assert body["created_at"] and body["updated_at"]
@@ -43,6 +51,8 @@ def test_a_created_space_stores_topics_with_an_empty_session(client):
 
     (document,) = stored_spaces()
     assert document["lesson_name"] == "Photosynthesis"
+    assert document["goal"] == "Exam"
+    assert document["level"] == "intermediate"
     assert [topic["topic_name"] for topic in document["topics"]] == [
         "Light reactions",
         "Calvin cycle",
@@ -70,27 +80,41 @@ def test_the_same_lesson_can_be_shared_twice(client):
 
 def test_a_lesson_name_is_required(client):
     register(client)
-    body = {"lesson_name": "   ", "topics": ["Light reactions"]}
-    assert client.post(ENDPOINT, json=body).status_code == 422
+    assert (
+        client.post(ENDPOINT, json={**LESSON, "lesson_name": "   "}).status_code == 422
+    )
+
+
+def test_a_goal_is_required(client):
+    register(client)
+    assert client.post(ENDPOINT, json={**LESSON, "goal": "   "}).status_code == 422
+    assert client.post(ENDPOINT, json=_without(LESSON, "goal")).status_code == 422
+
+
+def test_a_level_is_required_and_must_be_one_of_the_three(client):
+    register(client)
+    assert client.post(ENDPOINT, json=_without(LESSON, "level")).status_code == 422
+    assert client.post(ENDPOINT, json={**LESSON, "level": "expert"}).status_code == 422
+
+
+def test_a_goal_can_be_the_students_own_words(client):
+    register(client)
+    body = {**LESSON, "goal": "  Campus placement interview  "}
+    response = client.post(ENDPOINT, json=body)
+    assert response.status_code == 201
+    assert response.json()["goal"] == "Campus placement interview"
 
 
 def test_at_least_one_topic_is_required(client):
     register(client)
-    assert (
-        client.post(
-            ENDPOINT, json={"lesson_name": "Photosynthesis", "topics": []}
-        ).status_code
-        == 422
-    )
-    assert (
-        client.post(ENDPOINT, json={"lesson_name": "Photosynthesis"}).status_code == 422
-    )
+    assert client.post(ENDPOINT, json={**LESSON, "topics": []}).status_code == 422
+    assert client.post(ENDPOINT, json=_without(LESSON, "topics")).status_code == 422
 
 
 def test_blank_and_duplicate_topics_are_collapsed(client):
     register(client)
     body = {
-        "lesson_name": "Photosynthesis",
+        **LESSON,
         "topics": ["  Calvin cycle  ", "calvin cycle", "   ", "Light reactions"],
     }
     response = client.post(ENDPOINT, json=body)
@@ -119,6 +143,8 @@ def test_listing_returns_a_summary_without_the_topics(client):
     assert set(summary) == {
         "id",
         "lesson_name",
+        "goal",
+        "level",
         "topic_count",
         "created_at",
         "updated_at",
@@ -128,7 +154,9 @@ def test_listing_returns_a_summary_without_the_topics(client):
 def test_listing_is_newest_activity_first(client):
     register(client)
     for name in ("Photosynthesis", "Respiration", "Osmosis"):
-        client.post(ENDPOINT, json={"lesson_name": name, "topics": ["Overview"]})
+        client.post(
+            ENDPOINT, json={**LESSON, "lesson_name": name, "topics": ["Overview"]}
+        )
 
     names = [space["lesson_name"] for space in client.get(ENDPOINT).json()]
     assert names == ["Osmosis", "Respiration", "Photosynthesis"]

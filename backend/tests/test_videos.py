@@ -325,3 +325,5 @@ def test_the_prompt_names_the_lesson_the_topic_and_both_audiences(client, search
     assert "Photosynthesis" in prompt
     assert "Light reactions" in prompt
     assert "'india'" in prompt and "'global'" in prompt
+    assert "revising for: Exam" in prompt
+    assert "Their level: intermediate" in prompt

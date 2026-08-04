@@ -8,6 +8,7 @@ import { LearnPanel } from "@/components/space/learn-panel";
 import { LessonNode } from "@/components/space/lesson-node";
 import { TopicCard } from "@/components/space/topic-card";
 import { VideoPanel } from "@/components/space/video-panel";
+import { LEVEL_LABELS } from "@/lib/space-api";
 import { topicPosition } from "@/lib/topic-layout";
 
 /**
@@ -64,6 +65,13 @@ export function SpaceDetail({ spaceId }: { spaceId: string }) {
           <h1 className="mt-0.5 truncate text-sm font-semibold tracking-tight">
             {space.lesson_name}
           </h1>
+          {space.goal || space.level ? (
+            <p className="mt-0.5 truncate text-xs text-muted">
+              {[space.goal, space.level && LEVEL_LABELS[space.level]]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+          ) : null}
         </div>
         <p className="hidden shrink-0 font-mono text-xs text-muted sm:block">
           {space.topics.length} topics

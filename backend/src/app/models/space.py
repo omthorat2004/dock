@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -7,6 +7,11 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.models.user import utcnow
 
 COLLECTION = "spaces"
+
+#: How deep the student wants this lesson taken, asked when the space is created.
+RevisionLevel = Literal["beginner", "intermediate", "advanced"]
+
+MAX_GOAL_LENGTH = 120
 
 #: The whole video shelf for one topic, not a page size. Once a topic holds this
 #: many links the shelf is closed: the API refuses to generate more and the card
@@ -99,6 +104,8 @@ class Space(BaseModel):
     id: str | None = Field(default=None, alias="_id")
     user_id: str
     lesson_name: str
+    goal: str | None = None
+    level: RevisionLevel | None = None
     topics: list[Topic]
     created_at: datetime = Field(default_factory=utcnow)
     updated_at: datetime = Field(default_factory=utcnow)

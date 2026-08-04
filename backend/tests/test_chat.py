@@ -117,6 +117,20 @@ def test_the_prompt_carries_the_recent_window(client):
     assert latest.rstrip().endswith("user: question 1\nassistant:")
 
 
+def test_the_prompt_carries_the_goal_and_level(client):
+    """What the space was created for is what the tutor answers at."""
+    space_id = make_space(client)
+    topic_id = topic_ids(client, space_id)[0]
+    provider = use_provider(FakeProvider())
+
+    send(client, space_id, topic_id, "explain this")
+
+    latest = tutor_prompts(provider)[-1]
+    assert "Revising for: Exam" in latest
+    assert "Student's level: intermediate" in latest
+    assert "Assume the basics are known" in latest
+
+
 def test_a_summary_appears_once_the_window_overflows(client):
     """Six turns is twelve messages, two more than the window holds."""
     space_id = make_space(client)

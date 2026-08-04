@@ -28,6 +28,8 @@ class SpaceService:
         space = Space(
             user_id=user_id,
             lesson_name=payload.lesson_name,
+            goal=payload.goal,
+            level=payload.level,
             topics=[Topic(topic_name=name) for name in payload.topics],
             created_at=now,
             updated_at=now,
