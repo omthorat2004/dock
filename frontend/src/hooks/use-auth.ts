@@ -62,7 +62,7 @@ export function useAuthSync() {
     else if (isError) setUnauthenticated();
     else setLoading();
   }, [isSuccess, isError, data, setUser, setUnauthenticated, setLoading]);
-
+  
   return query;
 }
 
@@ -73,8 +73,14 @@ export function useLogin() {
   return useMutation<AuthResponse, ApiError, LoginPayload>({
     mutationFn: (payload) => authApi.login(payload),
     // The response carries the user, so seed the cache directly instead of
-    // forcing a follow-up /auth/me round-trip.
+    // forcing a follow-up /auth/me round-trip. Everything that is not the
+    // session goes first: a new sign-in must not inherit the spaces the last
+    // one left in the cache. The auth query is spared so the mounted observer
+    // does not refetch what this line is about to write.
     onSuccess: ({ user }) => {
+      queryClient.removeQueries({
+        predicate: (query) => query.queryKey[0] !== "auth",
+      });
       queryClient.setQueryData(authKeys.user, user);
       router.replace("/dashboard");
     },
@@ -88,6 +94,9 @@ export function useRegister() {
   return useMutation<AuthResponse, ApiError, RegisterPayload>({
     mutationFn: (payload) => authApi.register(payload),
     onSuccess: ({ user }) => {
+      queryClient.removeQueries({
+        predicate: (query) => query.queryKey[0] !== "auth",
+      });
       queryClient.setQueryData(authKeys.user, user);
       router.replace("/dashboard");
     },

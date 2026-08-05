@@ -115,7 +115,13 @@ api.interceptors.response.use(
         return await api.request(config);
       } catch {
         // The refresh itself failed, so the session is genuinely over.
-        onSessionExpired?.();
+        //
+        // Announced on a microtask, so the rejection below settles first. The
+        // handler empties the query cache, and emptying it while the request
+        // that triggered all this is still unresolved drops the very query
+        // waiting on it: its observer would then create a fresh one and fetch
+        // again, into the same 401, forever.
+        queueMicrotask(() => onSessionExpired?.());
       }
     }
 

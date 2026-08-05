@@ -26,7 +26,7 @@ export default function AuthLayout({
             ← Back home
           </Link>
         </header>
-
+ 
         <main className="flex flex-1 items-center justify-center py-12">
           <div className="w-full max-w-sm">
             <AuthProvider>{children}</AuthProvider>

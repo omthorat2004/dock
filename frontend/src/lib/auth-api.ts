@@ -50,7 +50,9 @@ export const authApi = {
   },
 
   async getUser(): Promise<User> {
+
     const { data } = await api.get<User>("/auth/me");
+
     return data;
   },
 };
