@@ -5,6 +5,7 @@ how a test gets past the api-key gate; a test *of* that gate simply does not
 install the override.
 """
 
+from collections.abc import AsyncIterator
 from typing import Any
 
 from google.genai import errors as genai_errors
@@ -28,6 +29,11 @@ LESSON = {
 #: What a scripted provider searches for when a test does not say. Two calls,
 #: one per audience, which is what the video prompt asks a real model to do.
 DEFAULT_SEARCHES = [("topic for india", "india"), ("topic worldwide", "global")]
+
+#: How finely `FakeProvider.stream` cuts a scripted reply. Small enough that
+#: even a short reply arrives in several fragments, so a test that reassembles
+#: one is testing reassembly rather than a single-chunk special case.
+STREAM_CHUNK = 8
 
 
 class FakeProvider(AIProvider):
@@ -62,6 +68,18 @@ class FakeProvider(AIProvider):
     async def chat(self, message: str) -> str:
         self.prompts.append(message)
         return self._next_reply()
+
+    async def stream(self, message: str) -> AsyncIterator[str]:
+        """The same scripted reply as `chat`, in fragments.
+
+        A scripted exception is raised before the first fragment, which is
+        where the real provider raises one for a prompt that was too big: the
+        request fails on the way out, not partway through the answer.
+        """
+        self.prompts.append(message)
+        reply = self._next_reply()
+        for start in range(0, len(reply), STREAM_CHUNK):
+            yield reply[start : start + STREAM_CHUNK]
 
     async def chat_with_tools(
         self,

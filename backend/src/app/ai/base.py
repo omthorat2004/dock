@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from collections.abc import Awaitable, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any
 
@@ -30,7 +30,7 @@ ToolHandler = Callable[[str, dict[str, Any]], Awaitable[Any]]
 class AIProvider(ABC):
     """A chat-capable model provider.
 
-    Every concrete provider wraps one vendor SDK behind these two calls, so
+    Every concrete provider wraps one vendor SDK behind these three calls, so
     nothing outside `app.ai` imports a vendor client. Adding another provider is
     a new subclass plus a branch in `build_provider`; callers never change.
     """
@@ -38,6 +38,25 @@ class AIProvider(ABC):
     @abstractmethod
     async def chat(self, message: str) -> str:
         """Send one prompt and return the model's text reply."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def stream(self, message: str) -> AsyncIterator[str]:
+        """Send one prompt and yield the reply in fragments as it is written.
+
+        The fragments concatenate to exactly what `chat` would have returned for
+        the same prompt: streaming changes when the text arrives, never what it
+        says, so the transcript stored at the end of a stream is the same
+        transcript either route would have produced.
+
+        Not `async def`: an implementation is an async *generator*, so calling
+        this returns the iterator without starting the request. Anything that
+        must fail before a response begins — an unusable session, a missing key —
+        therefore has to be checked by the caller, not left to the first `anext`.
+
+        Fragments are whatever the vendor sends; no implementation may promise
+        they are whole words, sentences or valid Markdown on their own.
+        """
         raise NotImplementedError
 
     @abstractmethod

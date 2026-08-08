@@ -40,10 +40,12 @@ export function LearnPanel({
   const messages = history.data?.messages ?? [];
 
   // Follow the conversation as it grows. `messages.length` rather than the
-  // array, so a refetch that changes nothing does not yank the scroll.
+  // array, so a refetch that changes nothing does not yank the scroll, and the
+  // streamed length too, so a reply being written stays in view as it lands
+  // rather than only once it is stored.
   useEffect(() => {
     bottom.current?.scrollIntoView({ block: "end" });
-  }, [messages.length]);
+  }, [messages.length, send.streamed.length]);
 
   // The session's own state is the authority; the error from the send that hit
   // the limit is only how we found out about it.
@@ -126,9 +128,21 @@ export function LearnPanel({
         )}
 
         {send.isPending ? (
-          <p className="text-xs text-muted" role="status">
-            Dock is thinking…
-          </p>
+          send.streamed ? (
+            // The same bubble the stored message will render in, so the reply
+            // does not shift or restyle at the moment the stream ends and the
+            // transcript takes over.
+            <div
+              aria-busy
+              className="max-w-[85%] rounded-xl border border-border bg-subtle px-3.5 py-2.5 text-sm text-foreground"
+            >
+              <Markdown>{send.streamed}</Markdown>
+            </div>
+          ) : (
+            <p className="text-xs text-muted" role="status">
+              Dock is thinking…
+            </p>
+          )
         ) : null}
 
         <div ref={bottom} />

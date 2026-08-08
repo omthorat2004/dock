@@ -210,9 +210,14 @@ They are pushed into the learn-mode and video prompts, never just stored.
 Chat runs through a provider abstraction, so no vendor SDK is imported outside
 `app/ai/`:
 
-- `AIProvider` (ABC) has two async methods: `chat(message) -> str`, and
-  `chat_with_tools(message, tools, handler) -> str` for a prompt the model may
-  answer by calling tools first. A tool is a vendor-neutral `ToolSpec` (name,
+- `AIProvider` (ABC) has three methods: `chat(message) -> str`,
+  `stream(message) -> AsyncIterator[str]` for the same reply read as it is
+  written, and `chat_with_tools(message, tools, handler) -> str` for a prompt the
+  model may answer by calling tools first. `stream` is declared **not** `async
+  def` — an implementation is an async generator, so calling it starts nothing,
+  and a caller that needs to fail with a status code must do its checking before
+  the first `anext`. Only learn mode streams; the video shelf does not, because
+  its answer is a JSON array produced after a tool loop. A tool is a vendor-neutral `ToolSpec` (name,
   description, JSON-Schema `parameters`); the `handler` runs one call and returns
   anything JSON-serialisable. **Handler exceptions are not caught** — a tool that
   fails because its downstream service is down ends the request with that error

@@ -30,7 +30,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setSessionExpiredHandler(() => {
       useAuthStore.getState().setUnauthenticated();
-      queryClient.removeQueries({ type: "inactive" });
+    queryClient.removeQueries({ type: "inactive" });
     });
     return () => setSessionExpiredHandler(null);
   }, [queryClient]);

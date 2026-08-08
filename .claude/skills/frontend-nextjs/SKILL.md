@@ -25,6 +25,15 @@ Do not add:
 - server actions that call the API
 - a second HTTP client, or bare `fetch` in a component
 
+**One exception, and it is the only one:** learn mode's streaming send in
+`lib/chat-api.ts` uses `fetch`. Axios in the browser is XHR underneath, and XHR
+hands back a body only once it is complete, so it cannot deliver a reply as it is
+written; `EventSource` cannot POST. Because that call sits outside the
+interceptor, it re-does its two jobs by hand — a 401 retried once behind the
+**shared** `refreshSession()` promise (refreshing independently would race and
+sign the student out mid-reply), and every failure thrown as `ApiError`. It still
+lives in the `lib/*-api.ts` layer; a component never calls `fetch`.
+
 If something needs data, it goes: **component → hook → `lib/*-api.ts` → `api`
 (axios) → FastAPI**.
 
@@ -58,7 +67,8 @@ src/
   components/             # presentational; subfoldered (auth/, dashboard/,
                           # spaces/ = the list, space/ = one space's canvas,
                           # settings/, ui/) plus app-header.tsx / site-header.tsx
-  hooks/                  # use-auth.ts, use-api-key.ts, use-spaces.ts (TanStack), use-async.ts
+  hooks/                  # use-auth.ts, use-api-key.ts, use-spaces.ts, use-chat.ts,
+                          # use-videos.ts (all TanStack)
   lib/                    # axios.config.ts, query-client.ts, auth-store.ts (zustand), *-api.ts,
                           # space-url.ts, relative-time.ts, gemini-models.ts, validation.ts
 ```
@@ -112,9 +122,11 @@ nothing (punctuation only, non-Latin script) falls back to the bare id.
   in"), not a transient failure.
 - Invalidate `authKeys.user` after anything that changes the session or the user.
 
-`hooks/use-async.ts` also exists for one-shot imperative async that has nothing to
-cache. If the result should be cached, shared or refetched, use TanStack Query
-instead — that is the default.
+There is no hand-rolled async hook. Anything the user triggers is a
+`useMutation` (`useLogin`, `useAddTopics`, `useSuggestMoreTopics`); anything the
+page reads is a `useQuery`. Status, error, stale-response protection and
+unmounted guards come from the library, so do not reintroduce a local
+`useAsync`.
 
 ## Auth model
 

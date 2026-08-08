@@ -8,13 +8,19 @@ exists.
 """
 
 import logging
+from collections.abc import AsyncIterator
+from dataclasses import dataclass
 
 from fastapi import BackgroundTasks
 from pymongo.asynchronous.database import AsyncDatabase
 
 from app.ai.base import AIProvider
 from app.core.exceptions import ContextLimitReached
-from app.core.provider_errors import is_token_limit_error
+from app.core.provider_errors import (
+    TOKEN_LIMIT_CODE,
+    classify_provider_error,
+    is_token_limit_error,
+)
 from app.dao.chat_dao import ChatMessageDAO, ChatSummaryDAO
 from app.models.chat import RECENT_MESSAGE_WINDOW, ChatMessage, ChatSummary
 from app.models.space import Space, Topic, TopicSession
@@ -103,6 +109,61 @@ def _build_summary_prompt(
     return "\n\n".join(parts)
 
 
+@dataclass(frozen=True)
+class PreparedTurn:
+    """One turn resolved as far as it can be without calling the model.
+
+    Every way a send can fail *before* the model is reached — the space is not
+    yours, the topic is gone, the session is already closed — has happened by
+    the time one of these exists. That is the whole point of it: a streaming
+    response cannot report an error once it has started, because its status line
+    left with the first byte, so a streamed turn is prepared in one await that
+    is still allowed to raise, and only then handed to `stream_turn`.
+    """
+
+    space: Space
+    topic: Topic
+    session_id: str
+    #: The summary as it stood when the prompt was built, which is the value
+    #: `_roll_summary` must fold into, not whatever it reads back later.
+    summary: ChatSummary | None
+    message: str
+    prompt: str
+
+
+@dataclass(frozen=True)
+class StreamToken:
+    """A fragment of the reply, exactly as the provider produced it."""
+
+    text: str
+
+
+@dataclass(frozen=True)
+class StreamDone:
+    """The turn finished and both messages are stored."""
+
+    session_id: str
+    reply: ChatMessage
+
+
+@dataclass(frozen=True)
+class StreamFailed:
+    """The turn broke after the response had already begun.
+
+    Carries the same `(status, code, detail)` triple the global error handler
+    would have produced, so a failure mid-stream tells the client precisely what
+    a failure before the stream would have: same codes, same wording, only the
+    envelope differs.
+    """
+
+    status_code: int
+    code: str
+    detail: str
+
+
+StreamEvent = StreamToken | StreamDone | StreamFailed
+
+
 class ChatService:
     """Sending one message to a topic's tutor, and reading the transcript back.
 
@@ -135,6 +196,32 @@ class ChatService:
         without it: waiting for it would roughly double how long a send appears
         to take, for work whose result is not read until some later turn.
         """
+        prepared = await self.prepare_turn(user_id, space_id, topic_id, message)
+
+        try:
+            reply_text = await provider.chat(prepared.prompt)
+        except Exception as exc:
+            # The one provider failure that is a fact about *this session*
+            # rather than about the request: record it, so the next send is
+            # refused up front and the panel can explain itself.
+            if is_token_limit_error(exc):
+                await self._close_session(prepared)
+                raise ContextLimitReached from exc
+            # Everything else (a bad key, a rate limit, an outage) is the
+            # global handler's business, unchanged.
+            raise
+
+        return await self._persist(prepared, reply_text, provider, background)
+
+    async def prepare_turn(
+        self, user_id: str, space_id: str, topic_id: str, message: str
+    ) -> PreparedTurn:
+        """Resolve a turn up to the point the model would be called.
+
+        Both routes start here, so the ordering that matters — ownership, then
+        the closed-session refusal, then minting the session — is written once
+        and cannot drift between them.
+        """
         space, topic = await self.spaces.get_topic(user_id, space_id, topic_id)
 
         if topic.session.limit_reached:
@@ -144,45 +231,114 @@ class ChatService:
 
         summary = await self.summaries.get(session_id)
         recent = await self.messages.recent(session_id, RECENT_MESSAGE_WINDOW)
-        prompt = _build_prompt(space, topic, summary, recent, message)
+
+        return PreparedTurn(
+            space=space,
+            topic=topic,
+            session_id=session_id,
+            summary=summary,
+            message=message,
+            prompt=_build_prompt(space, topic, summary, recent, message),
+        )
+
+    async def stream_turn(
+        self,
+        prepared: PreparedTurn,
+        provider: AIProvider,
+        background: BackgroundTasks,
+    ) -> AsyncIterator[StreamEvent]:
+        """One turn, emitted as it is written, then stored.
+
+        Nothing is written to the database until the provider stops, because
+        until then there is no reply to store — a `ChatMessage` is one row, and
+        rewriting it on every fragment would be a write per token to save a read
+        nobody makes. The student sees the text long before it is persisted, and
+        that is fine: the transcript is what they will re-read tomorrow, not what
+        they are watching now.
+
+        A break partway through is the exception. Whatever fragments were
+        already sent are on the student's screen, so they are stored before the
+        failure is reported: a transcript that omitted them would contradict
+        what they just read. Only a turn that produced nothing is dropped
+        entirely.
+        """
+        parts: list[str] = []
 
         try:
-            reply_text = await provider.chat(prompt)
+            async for fragment in provider.stream(prepared.prompt):
+                parts.append(fragment)
+                yield StreamToken(fragment)
         except Exception as exc:
-            # The one provider failure that is a fact about *this session*
-            # rather than about the request: record it, so the next send is
-            # refused up front and the panel can explain itself.
+            # Same fact as in `send_message`, learned the same way, recorded the
+            # same way — only the reporting differs, because by now the status
+            # code has already been sent.
             if is_token_limit_error(exc):
-                topic.session.limit_reached = True
-                topic.session.updated_at = utcnow()
-                await self.spaces.save_topics(space)
-                raise ContextLimitReached from exc
-            # Everything else (a bad key, a rate limit, an outage) is the
-            # global handler's business, unchanged.
-            raise
+                await self._close_session(prepared)
+                yield StreamFailed(
+                    413,
+                    TOKEN_LIMIT_CODE,
+                    "Token limit reached for this session. "
+                    "Start a new session to continue.",
+                )
+                return
 
+            logger.exception("Stream failed for session %s", prepared.session_id)
+            if parts:
+                await self._persist(prepared, "".join(parts), provider, background)
+
+            status_code, code, detail = classify_provider_error(
+                getattr(exc, "code", None), getattr(exc, "message", "") or str(exc)
+            )
+            yield StreamFailed(status_code, code, detail)
+            return
+
+        reply = await self._persist(prepared, "".join(parts), provider, background)
+        yield StreamDone(prepared.session_id, reply)
+
+    async def _persist(
+        self,
+        prepared: PreparedTurn,
+        reply_text: str,
+        provider: AIProvider,
+        background: BackgroundTasks,
+    ) -> ChatMessage:
+        """Store both sides of a finished turn and queue the summary."""
         now = utcnow()
         reply = ChatMessage(
-            session_id=session_id, role="assistant", content=reply_text, created_at=now
+            session_id=prepared.session_id,
+            role="assistant",
+            content=reply_text,
+            created_at=now,
         )
         await self.messages.add_many(
             [
                 ChatMessage(
-                    session_id=session_id, role="user", content=message, created_at=now
+                    session_id=prepared.session_id,
+                    role="user",
+                    content=prepared.message,
+                    created_at=now,
                 ),
                 reply,
             ]
         )
 
-        topic.session.updated_at = now
-        await self.spaces.save_topics(space)
+        prepared.topic.session.updated_at = now
+        await self.spaces.save_topics(prepared.space)
 
         # Queued, not awaited: it runs once this reply is on its way to the
         # student. Nothing in the next request depends on it having finished:
         # `_roll_summary` reads the message count each time, so a turn it
         # missed is simply folded in by the following one.
-        background.add_task(self._roll_summary, provider, session_id, summary)
+        background.add_task(
+            self._roll_summary, provider, prepared.session_id, prepared.summary
+        )
         return reply
+
+    async def _close_session(self, prepared: PreparedTurn) -> None:
+        """Mark this session as past the model's input budget, for good."""
+        prepared.topic.session.limit_reached = True
+        prepared.topic.session.updated_at = utcnow()
+        await self.spaces.save_topics(prepared.space)
 
     async def get_history(
         self, user_id: str, space_id: str, topic_id: str

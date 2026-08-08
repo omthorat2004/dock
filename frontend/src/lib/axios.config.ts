@@ -56,7 +56,27 @@ export function setSessionExpiredHandler(handler: (() => void) | null) {
   onSessionExpired = handler;
 }
 
-function refreshSession(): Promise<void> {
+/**
+ * Announce a dead session, for callers outside the interceptor.
+ *
+ * The streaming send needs this for the same reason it needs `refreshSession`:
+ * it is a `fetch`, so the interceptor that normally announces this never runs.
+ */
+export function notifySessionExpired() {
+  onSessionExpired?.();
+}
+
+/**
+ * Rotate the session, once, however many callers ask at the same time.
+ *
+ * Exported because learn mode's streaming send cannot go through axios — a
+ * browser XHR hands back the body only when it is complete, so a streamed reply
+ * has to be read with `fetch`, outside every interceptor here. It still has to
+ * share *this* promise rather than refresh on its own: the backend revokes a
+ * refresh token the moment it is used, so two rotations racing would invalidate
+ * each other and sign the student out mid-sentence.
+ */
+export function refreshSession(): Promise<void> {
   refreshInFlight ??= axios
     .post(`${API_BASE_URL}${REFRESH_PATH}`, null, { withCredentials: true })
     .then(() => undefined)

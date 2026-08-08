@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { spaceKeys } from "@/hooks/use-spaces";
 import type { ApiError } from "@/lib/axios.config";
@@ -35,18 +36,43 @@ export function useChatHistory(
   });
 }
 
+/**
+ * Send one message and watch the reply arrive.
+ *
+ * Still one mutation, because a send is still one thing the student triggers
+ * that succeeds or fails. What streaming adds is `streamed`: the fragments so
+ * far, held here rather than in the query cache. They are not transcript — they
+ * are the same text the stored message will hold, arriving early — so writing
+ * each one into the cache would mean rewriting a message the server has not
+ * confirmed yet, hundreds of times a reply, and leaving a half-written turn
+ * behind on any failure.
+ *
+ * So the panel renders `streamed` while the mutation is pending, and the stored
+ * message the instant it is not.
+ */
 export function useSendMessage(spaceId: string, topicId: string) {
   const queryClient = useQueryClient();
   const key = chatKeys.topic(spaceId, topicId);
+  const [streamed, setStreamed] = useState("");
 
-  return useMutation<ChatReply, ApiError, string, { previous?: ChatHistory }>({
-    mutationFn: (message) => chatApi.send(spaceId, topicId, message),
+  const mutation = useMutation<
+    ChatReply,
+    ApiError,
+    string,
+    { previous?: ChatHistory }
+  >({
+    mutationFn: (message) =>
+      chatApi.stream(spaceId, topicId, message, (text) =>
+        setStreamed((current) => current + text),
+      ),
 
     // Show the student's own message straight away. Waiting for the round trip
     // to echo back what they just typed makes the panel feel broken.
     onMutate: async (message) => {
       await queryClient.cancelQueries({ queryKey: key });
       const previous = queryClient.getQueryData<ChatHistory>(key);
+
+      setStreamed("");
 
       const pending: ChatMessage = {
         role: "user",
@@ -63,11 +89,15 @@ export function useSendMessage(spaceId: string, topicId: string) {
     },
 
     onSuccess: (reply) => {
+      // Both in one handler, so React commits them together: clearing the
+      // fragments a render before the stored message lands would blank the
+      // reply the student is reading.
       queryClient.setQueryData<ChatHistory>(key, (current) => ({
         session_id: reply.session_id,
         limit_reached: current?.limit_reached ?? false,
         messages: [...(current?.messages ?? []), reply.reply],
       }));
+      setStreamed("");
       // The first message mints the session, so the space's own copy of the
       // topic is now stale.
       queryClient.invalidateQueries({ queryKey: spaceKeys.detail(spaceId) });
@@ -79,13 +109,21 @@ export function useSendMessage(spaceId: string, topicId: string) {
       if (context?.previous) {
         queryClient.setQueryData(key, context.previous);
       }
+      setStreamed("");
 
-      // The session is now closed server-side. Refetch both so the panel and
-      // the card agree, rather than each guessing from the error.
+      // Then ask the server what it actually kept. A stream that broke partway
+      // has already stored the fragments the student read, so unlike the
+      // non-streaming send, "it failed" no longer implies "nothing was written"
+      // and the optimistic rollback above cannot be the last word.
+      queryClient.invalidateQueries({ queryKey: key });
+
+      // The session is now closed server-side, so the card's own badge is stale
+      // too.
       if (error.code === ERROR_CODES.tokenLimitReached) {
-        queryClient.invalidateQueries({ queryKey: key });
         queryClient.invalidateQueries({ queryKey: spaceKeys.detail(spaceId) });
       }
     },
   });
+
+  return { ...mutation, streamed };
 }

@@ -76,7 +76,20 @@ is gone.
 Learn mode and the video shelf are live, both on the user's own key via
 `AIProviderDep`:
 
-- **Chat**: `POST /spaces/{id}/topics/{topic_id}/chat`. Each prompt carries one
+- **Chat**: `POST /spaces/{id}/topics/{topic_id}/chat`, and `…/chat/stream` for
+  the same turn as `text/event-stream`, which is what the panel uses. Both go
+  through `ChatService.prepare_turn`, so the checks that must happen before the
+  model — ownership, then a closed session — are written once. A streamed reply
+  is stored as **one** message when the provider stops, never rewritten per
+  fragment. The split that matters is where a failure can be reported: anything
+  known before the first byte is an ordinary status code, and anything after it
+  is an SSE `error` frame carrying the same `{code, detail}`, because the status
+  line is already spent. **The browser reads that stream with `fetch`, not
+  axios** — XHR cannot surface a partial body — so `chat-api.ts` re-does by hand
+  the two things the interceptor did: the shared `refreshSession()` retry on 401,
+  and normalising failures to `ApiError`. It is the one sanctioned exception to
+  the axios-only rule; do not spread it.
+  Each prompt carries one
   rolling summary plus the last `RECENT_MESSAGE_WINDOW` (10) messages, so the
   conversation stays bounded. Overflow past the window is folded into the
   session's single summary, which is *replaced*, never appended to. A provider

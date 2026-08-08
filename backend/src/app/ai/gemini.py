@@ -1,5 +1,6 @@
 import json
 import logging
+from collections.abc import AsyncIterator
 from typing import Any
 
 from google import genai
@@ -28,6 +29,37 @@ class GeminiProvider(AIProvider):
             input=message,
         )
         return interaction.output_text or ""
+
+    async def stream(self, message: str) -> AsyncIterator[str]:
+        """The same call as `chat`, read as it is written.
+
+        The interactions API answers a streamed request with a sequence of
+        events, of which only one carries reply text: a `step.delta` whose delta
+        is a `text` delta. The rest — step starts and stops, thought summaries,
+        the closing `interaction.completed` — are skipped rather than
+        concatenated, because a thought summary is the model reasoning about the
+        answer, not the answer, and the student must never be shown it.
+
+        SDK errors propagate exactly as they do from `chat`. A prompt over the
+        context window fails here, on the opening request, before the first
+        fragment, which is what lets the caller still treat it as a failed turn
+        rather than a truncated one.
+        """
+        stream = await self._client.aio.interactions.create(
+            model=self._model_version,
+            input=message,
+            stream=True,
+        )
+
+        async for event in stream:
+            if getattr(event, "event_type", None) != "step.delta":
+                continue
+            delta = getattr(event, "delta", None)
+            if getattr(delta, "type", None) != "text":
+                continue
+            text = getattr(delta, "text", "")
+            if text:
+                yield text
 
     async def chat_with_tools(
         self,

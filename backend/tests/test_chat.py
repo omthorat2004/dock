@@ -1,5 +1,7 @@
 """Learn mode: one topic's conversation, its rolling summary, and its limit."""
 
+import json
+
 import pytest
 from bson import ObjectId
 
@@ -262,3 +264,124 @@ def test_chatting_to_a_missing_topic_is_404(client):
     space_id = make_space(client)
     use_provider(FakeProvider())
     assert send(client, space_id, str(ObjectId()), "hello").status_code == 404
+
+
+# --- Streaming -------------------------------------------------------------
+#
+# The same turn as `send`, over `text/event-stream`. What these check is the
+# seam that only the streaming route has: which failures are still allowed to
+# be a status code, and which have to travel as an event because the status
+# line already left.
+
+
+def stream(client, space_id, topic_id, message):
+    return client.post(
+        f"{endpoint(space_id, topic_id)}/stream", json={"message": message}
+    )
+
+
+def frames(response) -> list[tuple[str, dict]]:
+    """The (event, payload) pairs in an SSE body."""
+    parsed = []
+    for block in response.text.split("\n\n"):
+        if not block.strip():
+            continue
+        event, data = "message", ""
+        for line in block.split("\n"):
+            if line.startswith("event:"):
+                event = line[6:].strip()
+            elif line.startswith("data:"):
+                data = line[5:].strip()
+        parsed.append((event, json.loads(data)))
+    return parsed
+
+
+def test_a_streamed_reply_arrives_in_fragments_and_is_stored_whole(client):
+    space_id = make_space(client)
+    topic_id = topic_ids(client, space_id)[0]
+    use_provider(FakeProvider(["Light drives the light reactions."]))
+
+    response = stream(client, space_id, topic_id, "What powers it?")
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/event-stream")
+
+    events = frames(response)
+    tokens = [payload["text"] for event, payload in events if event == "token"]
+    assert len(tokens) > 1, "a reply that arrives in one piece is not streaming"
+    assert "".join(tokens) == "Light drives the light reactions."
+
+    event, done = events[-1]
+    assert event == "done"
+    assert done["reply"]["content"] == "Light drives the light reactions."
+
+    # The transcript holds the reply as one message. The fragments are a
+    # delivery detail and must not survive into storage.
+    stored_messages = [message["content"] for message in stored("chat_messages")]
+    assert stored_messages == ["What powers it?", "Light drives the light reactions."]
+
+
+def test_streaming_requires_a_configured_api_key(client):
+    """Known before the model is reached, so it is still a status code."""
+    space_id = make_space(client)
+    topic_id = topic_ids(client, space_id)[0]
+
+    response = stream(client, space_id, topic_id, "Explain the Calvin cycle.")
+    assert response.status_code == 401
+    assert response.json()["code"] == "api_key_not_configured"
+
+
+def test_streaming_a_closed_session_is_refused_before_the_stream_starts(client):
+    space_id = make_space(client)
+    topic_id = topic_ids(client, space_id)[0]
+    use_provider(
+        FakeProvider(
+            [FakeProviderError(400, "The input token count exceeds the maximum.")]
+        )
+    )
+    assert send(client, space_id, topic_id, "One more question.").status_code == 413
+
+    # The session is closed now, so this one never reaches the model and can
+    # still be answered with a status code rather than an event.
+    response = stream(client, space_id, topic_id, "And another.")
+    assert response.status_code == 413
+    assert response.json()["code"] == "token_limit_reached"
+
+
+def test_a_token_limit_during_a_stream_arrives_as_an_error_event(client):
+    """The response is already 200 by the time the provider refuses."""
+    space_id = make_space(client)
+    topic_id = topic_ids(client, space_id)[0]
+    use_provider(
+        FakeProvider(
+            [FakeProviderError(400, "The input token count exceeds the maximum.")]
+        )
+    )
+
+    response = stream(client, space_id, topic_id, "One more question.")
+    assert response.status_code == 200
+
+    event, payload = frames(response)[-1]
+    assert event == "error"
+    assert payload["code"] == "token_limit_reached"
+    # The status the same failure would have carried on the JSON route, so the
+    # client branches on one set of codes either way.
+    assert payload["status"] == 413
+
+    # Recorded on the session exactly as the non-streaming route records it.
+    assert stored_space(space_id)["topics"][0]["session"]["limit_reached"] is True
+    # The turn produced no text, so nothing is stored: a transcript holding a
+    # question with no answer would be worse than no transcript.
+    assert stored("chat_messages") == []
+
+
+def test_a_streamed_turn_still_rolls_the_summary(client):
+    """Streaming changes delivery, not the bookkeeping that follows a turn."""
+    space_id = make_space(client)
+    topic_id = topic_ids(client, space_id)[0]
+    provider = use_provider(FakeProvider())
+
+    for index in range(RECENT_MESSAGE_WINDOW):
+        stream(client, space_id, topic_id, f"question {index}")
+
+    assert summary_prompts(provider), "no summary was ever queued"
+    assert stored("chat_summaries")
