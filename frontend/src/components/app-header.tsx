@@ -32,7 +32,7 @@ export function AppHeader() {
     <header className="border-b border-border bg-surface">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-6">
         <div className="flex items-center gap-6">
-          <Logo href="/dashboard" />
+          <Logo href="/" />
           <nav aria-label="Application" className="flex items-center gap-1">
             {nav.map((item) => (
               <Link
