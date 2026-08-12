@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { buttonStyles } from "@/components/ui/button";
 import { useGenerateVideos } from "@/hooks/use-videos";
 import {
   ERROR_CODES,
@@ -50,12 +51,18 @@ export function VideoPanel({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [onClose]);
 
-  // Derived, not synced: falling back to the first video means the player
-  // fills itself as soon as any arrive, without an effect writing state back
-  // during render, which the React Compiler lint rejects outright.
-  const playing =
-    links.find((link) => link.video_id === selectedId) ?? links[0] ?? null;
+  // Strictly what was picked: the shelf opens as a list, and the player only
+  // exists once the student has chosen something to watch.
+  const playing = links.find((link) => link.video_id === selectedId) ?? null;
   const playingId = playing?.video_id ?? null;
+  const playingIndex = playing
+    ? links.findIndex((link) => link.video_id === playingId)
+    : -1;
+
+  function step(delta: number) {
+    const next = links[playingIndex + delta];
+    if (next) setSelectedId(next.video_id);
+  }
   // Missing key and rejected key are both 401s about the model, not the
   // session, so both retire the button instead of offering a retry that cannot
   // work.
@@ -75,7 +82,7 @@ export function VideoPanel({
       aria-label={`Videos: ${topic.topic_name}`}
       className="flex min-w-0 flex-1 flex-col border-l border-border bg-surface"
     >
-      <header className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
+      <header className="flex shrink-0 items-start justify-between gap-4 border-b border-border px-5 py-4">
         <div className="min-w-0">
           <p className="font-mono text-[11px] uppercase tracking-widest text-muted">
             Videos
@@ -101,9 +108,24 @@ export function VideoPanel({
         </button>
       </header>
 
+      {/* One view or the other, never stacked: an `aspect-video` player grows
+          with the panel, and sharing the column with the shelf meant a wide
+          panel squeezed the shelf out of sight. */}
       {playing ? (
-        <div className="border-b border-border  px-5 py-4">
-          <div className="aspect-video w-[50%]  overflow-hidden rounded-lg border border-border bg-subtle">
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+          <button
+            type="button"
+            onClick={() => setSelectedId(null)}
+            className="mb-3 inline-flex items-center gap-1 rounded-md text-xs text-muted transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          >
+            ← All {links.length} videos
+          </button>
+
+          {/* Capped by width rather than height, so the frame stays 16:9
+              instead of letterboxing when the panel is dragged wide. The cap is
+              in `dvh` because what has to survive is the *height* budget: the
+              title and Prev/Next below must stay on screen without scrolling. */}
+          <div className="mx-auto aspect-video w-full max-w-[calc(30dvh*16/9)] overflow-hidden rounded-lg border border-border bg-subtle">
             <iframe
               // Keyed by id so switching video swaps the player rather than
               // leaving the previous one loaded underneath.
@@ -126,29 +148,45 @@ export function VideoPanel({
           >
             Open on YouTube ↗
           </a>
-        </div>
-      ) : null}
 
-      <div className="flex-1 overflow-y-auto px-5 py-4">
-        {links.length === 0 ? (
-          <p className="text-xs leading-relaxed text-muted">
-            No videos yet. Dock searches YouTube for this topic and picks a mix
-            of Indian and international explainers, every one a real search
-            result, so nothing here is a dead link.
-          </p>
-        ) : (
-          <ul className="space-y-1">
-            {links.map((video, index) => {
-              const isPlaying = video.video_id === playingId;
-              return (
+          <div className="mt-3 flex items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={() => step(-1)}
+              disabled={playingIndex <= 0}
+              className={buttonStyles("secondary", "px-3 py-1.5 text-xs")}
+            >
+              ← Previous
+            </button>
+            <span aria-live="polite" className="font-mono text-[11px] text-muted">
+              {playingIndex + 1} / {links.length}
+            </span>
+            <button
+              type="button"
+              onClick={() => step(1)}
+              disabled={playingIndex >= links.length - 1}
+              className={buttonStyles("secondary", "px-3 py-1.5 text-xs")}
+            >
+              Next →
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+          {links.length === 0 ? (
+            <p className="text-xs leading-relaxed text-muted">
+              No videos yet. Dock searches YouTube for this topic and picks a
+              mix of Indian and international explainers, every one a real
+              search result, so nothing here is a dead link.
+            </p>
+          ) : (
+            <ul className="space-y-1">
+              {links.map((video, index) => (
                 <li key={video.video_id}>
                   <button
                     type="button"
                     onClick={() => setSelectedId(video.video_id)}
-                    aria-current={isPlaying || undefined}
-                    className={`flex w-full items-start gap-2.5 rounded-lg p-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
-                      isPlaying ? "bg-subtle" : "hover:bg-subtle"
-                    }`}
+                    className="flex w-full items-start gap-2.5 rounded-lg p-2 text-left transition-colors hover:bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                   >
                     <span
                       aria-hidden
@@ -156,22 +194,18 @@ export function VideoPanel({
                     >
                       {index + 1}
                     </span>
-                    <span
-                      className={`min-w-0 text-xs leading-snug ${
-                        isPlaying ? "font-medium text-foreground" : "text-muted"
-                      }`}
-                    >
+                    <span className="min-w-0 text-xs leading-snug text-muted">
                       {video.title}
                     </span>
                   </button>
                 </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
-      <div className="border-t border-border px-5 py-4">
+      <div className="shrink-0 border-t border-border px-5 py-4">
         {topic.video_limit_reached ? (
           <p className="text-xs leading-relaxed text-muted">
             That is all {MAX_YOUTUBE_LINKS} videos for this topic. Dock cannot

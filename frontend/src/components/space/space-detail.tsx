@@ -73,10 +73,19 @@ function PanelSlot({
           if (event.key === "ArrowLeft") onResize(clamp(width + 16));
           else if (event.key === "ArrowRight") onResize(clamp(width - 16));
         }}
-        className={`w-1 shrink-0 cursor-col-resize touch-none transition-colors focus-visible:bg-accent/40 focus-visible:outline-none ${
-          dragging ? "bg-accent/40" : "hover:bg-accent/40"
-        }`}
-      />
+        // 12px of grab area for a 2px line: a hairline-wide hit target is
+        // almost impossible to catch with a mouse.
+        className="group flex w-3 shrink-0 cursor-col-resize touch-none items-stretch justify-center focus-visible:outline-none"
+      >
+        <span
+          aria-hidden
+          className={`w-0.5 transition-colors ${
+            dragging
+              ? "bg-accent/40"
+              : "bg-transparent group-hover:bg-accent/40 group-focus-visible:bg-accent/40"
+          }`}
+        />
+      </div>
       {children}
     </div>
   );
