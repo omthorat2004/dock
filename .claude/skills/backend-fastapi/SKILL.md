@@ -237,8 +237,24 @@ Chat runs through a provider abstraction, so no vendor SDK is imported outside
   `google.genai.errors.APIError` handler in `core/error_handlers.py`
   (`classify_provider_error`) maps them: rate limit → 429 `provider_rate_limited`,
   over the context window → 413 `token_limit_reached`, rejected key → 401
-  `invalid_provider_key`, otherwise → 502 `provider_error`. Providers let the SDK
-  error propagate — the handler is the one place it is translated.
+  `invalid_provider_key`, otherwise → 502 `provider_error`.
+- **…but the interactions API does not raise that class**, and this is a trap.
+  It raises from two unrelated hierarchies: `compat_errors.APIError`
+  (`BadRequestError`, `RateLimitError`, …) when the failure parses, and
+  `GenAiError` (`GenAiDefaultError`, `ResponseValidationError`) when it does
+  not — which is what a rejected key gives you, because Gemini answers that one
+  with the envelope wrapped in a **list**, `[{"error": {...}}]`, where the SDK
+  expects an object. Neither inherits `genai.errors.APIError`, so both fell
+  past the handler to the catch-all and every provider failure reached the user
+  as a 500 "Something went wrong". `GeminiProvider._vendor_errors` now wraps
+  each vendor call and rebuilds the canonical `APIError` from `status_code` /
+  `message` / `body`. **A new provider must do the same for its own SDK** — the
+  handler can only translate what it can catch.
+- The two 401s are not the same 401. `api_key_not_configured` and
+  `invalid_provider_key` both come back from a healthy session, so the frontend
+  must never refresh on them (`isProviderKeyError` in `lib/constants.ts`);
+  treating either as a dead session signs a student out for mistyping a Gemini
+  key.
 
 ## Config
 

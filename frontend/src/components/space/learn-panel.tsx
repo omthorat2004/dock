@@ -71,7 +71,7 @@ export function LearnPanel({
   return (
     <aside
       aria-label={`Learn mode: ${topic.topic_name}`}
-      className="flex w-full shrink-0 flex-col border-l border-border bg-surface sm:w-[380px]"
+      className="flex min-w-0 flex-1 flex-col border-l border-border bg-surface"
     >
       <header className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
         <div className="min-w-0">

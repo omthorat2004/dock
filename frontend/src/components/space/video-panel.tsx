@@ -73,7 +73,7 @@ export function VideoPanel({
   return (
     <aside
       aria-label={`Videos: ${topic.topic_name}`}
-      className="flex w-full shrink-0 flex-col border-l border-border bg-surface sm:w-[380px]"
+      className="flex min-w-0 flex-1 flex-col border-l border-border bg-surface"
     >
       <header className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
         <div className="min-w-0">
@@ -102,8 +102,8 @@ export function VideoPanel({
       </header>
 
       {playing ? (
-        <div className="border-b border-border px-5 py-4">
-          <div className="aspect-video w-full overflow-hidden rounded-lg border border-border bg-subtle">
+        <div className="border-b border-border  px-5 py-4">
+          <div className="aspect-video w-[50%]  overflow-hidden rounded-lg border border-border bg-subtle">
             <iframe
               // Keyed by id so switching video swaps the player rather than
               // leaving the previous one loaded underneath.

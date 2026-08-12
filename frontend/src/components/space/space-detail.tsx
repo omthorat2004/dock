@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useSpace } from "@/hooks/use-spaces";
 import { AddTopicsModal } from "@/components/space/add-topics-modal";
@@ -20,6 +20,68 @@ import { topicPosition } from "@/lib/topic-layout";
  */
 type OpenPanel = { topicId: string; mode: "chat" | "videos" };
 
+const MIN_PANEL_WIDTH = 320;
+const MAX_PANEL_WIDTH = 720;
+const DEFAULT_PANEL_WIDTH = 380;
+
+/** The panel's slot beside the canvas, with a drag handle on its left edge. */
+function PanelSlot({
+  width,
+  onResize,
+  children,
+}: {
+  width: number;
+  onResize: (width: number) => void;
+  children: React.ReactNode;
+}) {
+  const slot = useRef<HTMLDivElement>(null);
+  const [dragging, setDragging] = useState(false);
+
+  const clamp = (value: number) =>
+    Math.min(MAX_PANEL_WIDTH, Math.max(MIN_PANEL_WIDTH, value));
+
+  return (
+    <div
+      ref={slot}
+      style={{ width }}
+      className={`flex min-h-0 max-w-[85vw] shrink-0 ${dragging ? "select-none" : ""}`}
+    >
+      <div
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Resize panel"
+        aria-valuenow={width}
+        aria-valuemin={MIN_PANEL_WIDTH}
+        aria-valuemax={MAX_PANEL_WIDTH}
+        tabIndex={0}
+        onPointerDown={(event) => {
+          event.preventDefault();
+          event.currentTarget.setPointerCapture(event.pointerId);
+          setDragging(true);
+        }}
+        onPointerMove={(event) => {
+          if (!dragging) return;
+          const right =
+            slot.current?.getBoundingClientRect().right ?? window.innerWidth;
+          onResize(clamp(right - event.clientX));
+        }}
+        onPointerUp={(event) => {
+          event.currentTarget.releasePointerCapture(event.pointerId);
+          setDragging(false);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "ArrowLeft") onResize(clamp(width + 16));
+          else if (event.key === "ArrowRight") onResize(clamp(width - 16));
+        }}
+        className={`w-1 shrink-0 cursor-col-resize touch-none transition-colors focus-visible:bg-accent/40 focus-visible:outline-none ${
+          dragging ? "bg-accent/40" : "hover:bg-accent/40"
+        }`}
+      />
+      {children}
+    </div>
+  );
+}
+
 /**
  * A space, opened: the lesson in the middle of its canvas with its topic cards
  * laid out around it, and learn mode in a panel beside them.
@@ -32,6 +94,8 @@ export function SpaceDetail({ spaceId }: { spaceId: string }) {
   const { data: space, isPending, error } = useSpace(spaceId);
   const [panel, setPanel] = useState<OpenPanel | null>(null);
   const [addingTopics, setAddingTopics] = useState(false);
+  // Held here, not in the slot, so the width survives closing and reopening.
+  const [panelWidth, setPanelWidth] = useState(DEFAULT_PANEL_WIDTH);
 
   if (isPending) return <SpaceShimmer />;
 
@@ -128,23 +192,25 @@ export function SpaceDetail({ spaceId }: { spaceId: string }) {
         </SpaceCanvas>
 
         {openTopic && panel ? (
-          panel.mode === "chat" ? (
-            <LearnPanel
-              // Remount when the student switches card, so the composer draft
-              // and any error state belong to the topic on screen.
-              key={`chat-${openTopic.id}`}
-              spaceId={space.id}
-              topic={openTopic}
-              onClose={() => setPanel(null)}
-            />
-          ) : (
-            <VideoPanel
-              key={`videos-${openTopic.id}`}
-              spaceId={space.id}
-              topic={openTopic}
-              onClose={() => setPanel(null)}
-            />
-          )
+          <PanelSlot width={panelWidth} onResize={setPanelWidth}>
+            {panel.mode === "chat" ? (
+              <LearnPanel
+                // Remount when the student switches card, so the composer draft
+                // and any error state belong to the topic on screen.
+                key={`chat-${openTopic.id}`}
+                spaceId={space.id}
+                topic={openTopic}
+                onClose={() => setPanel(null)}
+              />
+            ) : (
+              <VideoPanel
+                key={`videos-${openTopic.id}`}
+                spaceId={space.id}
+                topic={openTopic}
+                onClose={() => setPanel(null)}
+              />
+            )}
+          </PanelSlot>
         ) : null}
       </div>
     </div>
