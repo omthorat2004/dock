@@ -5,7 +5,7 @@ import {
   notifySessionExpired,
   refreshSession,
 } from "@/lib/axios.config";
-import { ERROR_CODES } from "@/lib/constants";
+import { isProviderKeyError } from "@/lib/constants";
 
 /**
  * Who said it, in the model's own vocabulary, which is how the backend stores
@@ -70,12 +70,8 @@ async function openStream(
 
   // The same split the interceptor makes: a 401 from a route that wants the
   // student's *provider* key is not an expired session, and refreshing would
-  // rotate their tokens to learn nothing.
-  if (
-    response.status === 401 &&
-    retry &&
-    failure?.code !== ERROR_CODES.apiKeyNotConfigured
-  ) {
+  // rotate their tokens to learn nothing — then sign them out if it failed.
+  if (response.status === 401 && retry && !isProviderKeyError(failure?.code)) {
     try {
       await refreshSession();
     } catch {

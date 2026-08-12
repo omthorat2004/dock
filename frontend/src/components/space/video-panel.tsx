@@ -7,6 +7,7 @@ import {
   ERROR_CODES,
   MAX_YOUTUBE_LINKS,
   YOUTUBE_LINKS_PER_REQUEST,
+  isProviderKeyError,
 } from "@/lib/constants";
 import type { Topic } from "@/lib/space-api";
 
@@ -55,7 +56,11 @@ export function VideoPanel({
   const playing =
     links.find((link) => link.video_id === selectedId) ?? links[0] ?? null;
   const playingId = playing?.video_id ?? null;
-  const needsKey = generate.error?.code === ERROR_CODES.apiKeyNotConfigured;
+  // Missing key and rejected key are both 401s about the model, not the
+  // session, so both retire the button instead of offering a retry that cannot
+  // work.
+  const needsKey = isProviderKeyError(generate.error?.code);
+  const keyRejected = generate.error?.code === ERROR_CODES.invalidProviderKey;
   const foundNothing = generate.isSuccess && generate.data.added.length === 0;
 
   // YouTube being down or out of quota is not the student's mistake and there
@@ -174,11 +179,23 @@ export function VideoPanel({
           </p>
         ) : needsKey ? (
           <p className="text-xs leading-relaxed text-muted">
-            Finding videos runs on your own model.{" "}
-            <Link href="/api-key" className="text-accent hover:underline">
-              Add your API key
-            </Link>{" "}
-            to get started.
+            {keyRejected ? (
+              <>
+                Your provider rejected that API key.{" "}
+                <Link href="/api-key" className="text-accent hover:underline">
+                  Check your key
+                </Link>{" "}
+                to find videos.
+              </>
+            ) : (
+              <>
+                Finding videos runs on your own model.{" "}
+                <Link href="/api-key" className="text-accent hover:underline">
+                  Add your API key
+                </Link>{" "}
+                to get started.
+              </>
+            )}
           </p>
         ) : (
           <>

@@ -23,6 +23,8 @@ export const RECENT_MESSAGE_WINDOW = 10;
 export const ERROR_CODES = {
   /** 401: signed in, but no provider key. Send them to /api-key, not /login. */
   apiKeyNotConfigured: "api_key_not_configured",
+  /** 401: signed in, key set, but the provider rejected it. Also /api-key. */
+  invalidProviderKey: "invalid_provider_key",
   /** 413: this topic's conversation no longer fits the model's input budget. */
   tokenLimitReached: "token_limit_reached",
   /** 409: the topic's video shelf is full. */
@@ -35,3 +37,23 @@ export const ERROR_CODES = {
   /** 503: YouTube search is unreachable or not configured on the server. */
   youtubeUnavailable: "youtube_unavailable",
 } as const;
+
+/**
+ * Is this 401 about the student's *provider* key rather than their session?
+ *
+ * The distinction is load bearing, and getting it wrong is worse than it
+ * sounds. A 401 normally means the session died, so the axios interceptor
+ * refreshes and, if that fails, signs the user out and sends them to /login.
+ * But both codes below come back from a perfectly good session — one where the
+ * model key is missing or was rejected by the provider. Treating either as a
+ * dead session would rotate their tokens for nothing and, on a failed refresh,
+ * throw them out of the app because they pasted a bad Gemini key.
+ *
+ * So: never refresh on these, and point the user at /api-key.
+ */
+export function isProviderKeyError(code: string | undefined): boolean {
+  return (
+    code === ERROR_CODES.apiKeyNotConfigured ||
+    code === ERROR_CODES.invalidProviderKey
+  );
+}

@@ -1,13 +1,91 @@
+import contextlib
 import json
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterator
 from typing import Any
 
 from google import genai
+from google.genai import errors as genai_errors
+from google.genai._gaos.errors.genaierror import GenAiError
+from google.genai._gaos.lib import compat_errors
 
 from app.ai.base import AIProvider, ToolHandler, ToolSpec
 
 logger = logging.getLogger("app.ai.gemini")
+
+#: What the interactions API actually raises, and the reason this module has to
+#: translate at all.
+#:
+#: `core.error_handlers` registers its provider handler on
+#: `google.genai.errors.APIError`, but nothing on this path is one. The SDK has
+#: two *other* hierarchies, neither related to it:
+#:
+#:   * `compat_errors.APIError` — `BadRequestError`, `RateLimitError` and the
+#:     rest, raised when the failure parses cleanly;
+#:   * `GenAiError` — `GenAiDefaultError` and `ResponseValidationError`, raised
+#:     when it does not, which is what a rejected key produces, because Gemini
+#:     answers that one with the error envelope wrapped in a *list*
+#:     (`[{"error": {...}}]`) where the SDK expects an object.
+#:
+#: Either way the exception fell past the provider handler to the catch-all, so
+#: every provider failure — a bad key, a spent quota — reached the student as a
+#: 500 "Something went wrong". Both hierarchies carry `status_code`, `message`
+#: and `body`, which is enough to rebuild the canonical error and leave
+#: everything downstream unchanged.
+_VENDOR_ERRORS = (compat_errors.APIError, GenAiError)
+
+
+def _error_payload(body: Any) -> dict[str, Any]:
+    """The `{"code", "message", ...}` object out of a provider error body.
+
+    Handles both envelopes: the documented `{"error": {...}}` and the
+    list-wrapped `[{"error": {...}}]` that started this. An unreadable body is
+    not an error here — the caller still has `status_code` to fall back on.
+    """
+    if isinstance(body, (str, bytes)):
+        try:
+            body = json.loads(body)
+        except (ValueError, TypeError):
+            return {}
+    if isinstance(body, list):
+        body = body[0] if body else None
+    if not isinstance(body, dict):
+        return {}
+    error = body.get("error")
+    return error if isinstance(error, dict) else {}
+
+
+def _as_api_error(exc: Exception) -> genai_errors.APIError:
+    """Rebuild the canonical SDK error from whichever one the SDK raised.
+
+    Returning `google.genai.errors.APIError` rather than a new domain exception
+    is deliberate: it is what the global handler already maps and what
+    `is_token_limit_error` already duck-types on, so this is the only place that
+    has to know the vendor raises three different things.
+
+    The body is preferred over the exception's own attributes for the message,
+    because the wrapped case puts the useful sentence ("API key not valid")
+    inside the body while the exception's own message is about schemas.
+    """
+    payload = _error_payload(getattr(exc, "body", None))
+
+    code = payload.get("code")
+    if not isinstance(code, int):
+        code = getattr(exc, "status_code", None)
+    if not isinstance(code, int):
+        code = 500
+
+    message = payload.get("message") or getattr(exc, "message", "") or str(exc)
+    return genai_errors.APIError(code, {"error": {"code": code, "message": message}})
+
+
+@contextlib.contextmanager
+def _vendor_errors() -> Iterator[None]:
+    """Normalise one vendor call's failure into the SDK's canonical error."""
+    try:
+        yield
+    except _VENDOR_ERRORS as exc:
+        raise _as_api_error(exc) from exc
 
 
 class GeminiProvider(AIProvider):
@@ -17,6 +95,10 @@ class GeminiProvider(AIProvider):
     limit) are deliberately *not* caught: the app-level handler in
     `core.error_handlers` turns `google.genai.errors.APIError` into the API's
     standard error shape, so every route gets the same treatment for free.
+
+    `_vendor_errors` is the one exception, and it exists to *preserve* that: it
+    only rebuilds the SDK's own exception for a failure the SDK itself could not
+    parse into one. Nothing is swallowed.
     """
 
     def __init__(self, api_key: str, model_version: str) -> None:
@@ -24,10 +106,11 @@ class GeminiProvider(AIProvider):
         self._model_version = model_version
 
     async def chat(self, message: str) -> str:
-        interaction = await self._client.aio.interactions.create(
-            model=self._model_version,
-            input=message,
-        )
+        with _vendor_errors():
+            interaction = await self._client.aio.interactions.create(
+                model=self._model_version,
+                input=message,
+            )
         return interaction.output_text or ""
 
     async def stream(self, message: str) -> AsyncIterator[str]:
@@ -45,21 +128,25 @@ class GeminiProvider(AIProvider):
         fragment, which is what lets the caller still treat it as a failed turn
         rather than a truncated one.
         """
-        stream = await self._client.aio.interactions.create(
-            model=self._model_version,
-            input=message,
-            stream=True,
-        )
+        with _vendor_errors():
+            stream = await self._client.aio.interactions.create(
+                model=self._model_version,
+                input=message,
+                stream=True,
+            )
 
-        async for event in stream:
-            if getattr(event, "event_type", None) != "step.delta":
-                continue
-            delta = getattr(event, "delta", None)
-            if getattr(delta, "type", None) != "text":
-                continue
-            text = getattr(delta, "text", "")
-            if text:
-                yield text
+            # Inside the block too: a rate limit can land on the opening request
+            # or partway through the events, and both have to reach the caller
+            # as the same provider error.
+            async for event in stream:
+                if getattr(event, "event_type", None) != "step.delta":
+                    continue
+                delta = getattr(event, "delta", None)
+                if getattr(delta, "type", None) != "text":
+                    continue
+                text = getattr(delta, "text", "")
+                if text:
+                    yield text
 
     async def chat_with_tools(
         self,
@@ -81,11 +168,12 @@ class GeminiProvider(AIProvider):
         handler is usually rate-limited downstream, and the ordering makes a
         failure easy to attribute.
         """
-        interaction = await self._client.aio.interactions.create(
-            model=self._model_version,
-            input=message,
-            tools=[self._declare(tool) for tool in tools],
-        )
+        with _vendor_errors():
+            interaction = await self._client.aio.interactions.create(
+                model=self._model_version,
+                input=message,
+                tools=[self._declare(tool) for tool in tools],
+            )
 
         for _ in range(max_rounds):
             calls = [
@@ -110,11 +198,14 @@ class GeminiProvider(AIProvider):
                     }
                 )
 
-            interaction = await self._client.aio.interactions.create(
-                model=self._model_version,
-                previous_interaction_id=interaction.id,
-                input=results,
-            )
+            # Only the vendor call is wrapped, never `handler` above: a tool
+            # that fails must reach the caller untouched, as it always has.
+            with _vendor_errors():
+                interaction = await self._client.aio.interactions.create(
+                    model=self._model_version,
+                    previous_interaction_id=interaction.id,
+                    input=results,
+                )
 
         # Out of rounds with the model still calling tools. Whatever text it has
         # produced is returned as-is; the caller decides whether that is usable.

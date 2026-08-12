@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Markdown } from "@/components/markdown";
 import { useChatHistory, useSendMessage } from "@/hooks/use-chat";
-import { ERROR_CODES } from "@/lib/constants";
+import { ERROR_CODES, isProviderKeyError } from "@/lib/constants";
 import type { Topic } from "@/lib/space-api";
 
 /**
@@ -53,7 +53,11 @@ export function LearnPanel({
     history.data?.limit_reached ??
     topic.session.limit_reached ??
     send.error?.code === ERROR_CODES.tokenLimitReached;
-  const needsKey = send.error?.code === ERROR_CODES.apiKeyNotConfigured;
+  // Both are 401s about the model key, not the session, so both close the
+  // composer and point at /api-key rather than letting the student retype a
+  // message that cannot send.
+  const needsKey = isProviderKeyError(send.error?.code);
+  const keyRejected = send.error?.code === ERROR_CODES.invalidProviderKey;
   const closed = limitReached || needsKey;
 
   function onSubmit(event: React.FormEvent) {
@@ -160,11 +164,23 @@ export function LearnPanel({
           </p>
         ) : needsKey ? (
           <p className="rounded-lg border border-border bg-subtle px-3.5 py-2.5 text-xs leading-relaxed text-muted">
-            Learn mode runs on your own model.{" "}
-            <Link href="/api-key" className="text-accent hover:underline">
-              Add your API key
-            </Link>{" "}
-            to start chatting.
+            {keyRejected ? (
+              <>
+                Your provider rejected that API key.{" "}
+                <Link href="/api-key" className="text-accent hover:underline">
+                  Check your key
+                </Link>{" "}
+                to keep chatting.
+              </>
+            ) : (
+              <>
+                Learn mode runs on your own model.{" "}
+                <Link href="/api-key" className="text-accent hover:underline">
+                  Add your API key
+                </Link>{" "}
+                to start chatting.
+              </>
+            )}
           </p>
         ) : (
           <form onSubmit={onSubmit}>

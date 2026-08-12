@@ -3,7 +3,7 @@ import axios, {
   type AxiosInstance,
   type InternalAxiosRequestConfig,
 } from "axios";
-import { ERROR_CODES } from "@/lib/constants";
+import { isProviderKeyError } from "@/lib/constants";
 
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
@@ -113,11 +113,12 @@ api.interceptors.response.use(
     const isAuthCall = AUTH_PATHS.some((path) => config?.url?.includes(path));
 
     // Not every 401 is an expired session. A route that needs the user's own
-    // provider key answers 401 when they have not set one. The session is
-    // perfectly good, so refreshing it would rotate the tokens to learn
-    // nothing and still fail.
-    const isMissingApiKey =
-      error.response?.data?.code === ERROR_CODES.apiKeyNotConfigured;
+    // provider key answers 401 when they have not set one, and again when the
+    // provider rejects the one they set. The session is perfectly good in both
+    // cases, so refreshing it would rotate the tokens to learn nothing and
+    // still fail — and a refresh that then failed would sign the student out
+    // over a mistyped Gemini key.
+    const isProviderKey = isProviderKeyError(error.response?.data?.code);
 
     // Refresh only when: the call needs auth and got a 401, it is not itself an
     // auth call, and it has not already been retried once.
@@ -125,7 +126,7 @@ api.interceptors.response.use(
       status === 401 &&
       config !== undefined &&
       !isAuthCall &&
-      !isMissingApiKey &&
+      !isProviderKey &&
       !config._retry;
 
     if (shouldRefresh) {
